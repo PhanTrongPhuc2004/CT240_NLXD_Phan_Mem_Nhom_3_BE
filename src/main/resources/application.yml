@@ -1,0 +1,49 @@
+# application.yml - Cấu hình chung cho toàn bộ ứng dụng CT240 Task Management Backend
+
+spring:
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  application:
+    name: ct240-task-management-backend
+
+  # Cấu hình MongoDB - URI đầy đủ với tên database ở cuối (để tránh dùng mặc định "test")
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ct240_task_db  # <-- Tên database chính thức ở đây!
+      auto-index-creation: true                     # Tự tạo index cho @Indexed
+
+  # Jackson - Tránh trả về các field null trong JSON response
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# JWT Configuration - Dùng cho Authentication (CN_01, CN_02, CN_03)
+jwt:
+  secret: your-very-secure-secret-key-min-256-bits-change-this  # Thay bằng key thật, dài >= 256 bit, dùng env var ở production
+  expiration: 86400000                                          # 24 giờ (ms) - có thể điều chỉnh
+
+# Logging - Debug chi tiết cho phát triển
+logging:
+  level:
+    root: INFO
+    com.nhom3.ct240: DEBUG                  # Log chi tiết cho package của nhóm
+    org.springframework.security: INFO      # Security log (có thể tăng lên DEBUG nếu debug auth)
+    org.springframework.data.mongodb: DEBUG # Debug query MongoDB (rất hữu ích khi test repository)
+
+# Cấu hình tùy chỉnh cho các chức năng trong đặc tả
+app:
+  notification:
+    enabled: true                           # Bật/tắt gửi thông báo (CN_27, CN_28)
+  statistics:
+    cache-ttl: 300000                       # Cache TTL cho thống kê (5 phút) - CN_29, CN_30
+  report:
+    export-formats: pdf,csv                 # Định dạng xuất báo cáo (CN_31)
+    max-export-rows: 10000                  # Giới hạn số dòng xuất để tránh overload server
+

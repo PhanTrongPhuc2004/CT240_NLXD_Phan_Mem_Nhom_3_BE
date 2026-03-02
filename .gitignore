@@ -1,0 +1,41 @@
+# Maven build
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# VS Code
+.vscode/
+
+# Logs & temp
+*.log
+logs/
+*~
+~$*
+*.tmp
+*.bak
+
+# Environment secrets
+application-secrets.yml
+application-prod.yml
+.env
+*.env
+
+# MongoDB data (nếu có)
+data/
+
+# Windows
+Thumbs.db
+ehthumbs.db
