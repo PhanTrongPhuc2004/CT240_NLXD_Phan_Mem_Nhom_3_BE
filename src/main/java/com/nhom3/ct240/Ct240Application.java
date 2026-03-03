@@ -16,5 +16,6 @@ public class Ct240Application {
         ConfigurableApplicationContext context = SpringApplication.run(Ct240Application.class, args);
         // Inject vào HostContext
         HostContext.setApplicationContext(context);
+
     }
 }
