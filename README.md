@@ -8,9 +8,9 @@
 - Lê Đình Duy - B2203494
 - Nguyễn Khánh Duy - B2203496
 - Nguyễn Hoàng Vinh - B2303856
-- Nguyễn Thanh Yến Khoa - B2303823
+- Nguyễn Thanh Yến Khoa - B2303823 
 - Nguyễn Kim Yến - B2303860
-
+ 
 **Giảng viên hướng dẫn**: TS. Trương Minh Thái  
 **Học kỳ**: II, Năm học 2025-2026  
 **Ngày hoàn thành**: Tháng 01/2026
@@ -156,3 +156,4 @@ Chúc bạn chạy thành công! Nếu gặp lỗi, kiểm tra console log và b
 
 © 2026 Nhóm 3 - Ứng dụng Quản lý Công việc Nhóm
 Đại học Cần Thơ - Trường Công nghệ Thông tin và Truyền thông
+ 

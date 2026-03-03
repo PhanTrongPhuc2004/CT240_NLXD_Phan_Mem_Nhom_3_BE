@@ -62,6 +62,8 @@ public class UserService implements UserDetailsService {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
+
+
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
