@@ -1,8 +1,8 @@
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.RegisterRequest;
-import com.nhom3.ct240.dto.LoginRequest;
 import com.nhom3.ct240.dto.AuthResponse;
+import com.nhom3.ct240.dto.LoginRequest;
+import com.nhom3.ct240.dto.RegisterRequest;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.UserService;
 import com.nhom3.ct240.util.JwtUtil;
@@ -13,6 +13,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,7 +34,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            // Đăng ký user vào DB
             User registeredUser = userService.register(
                     request.getUsername(),
                     request.getEmail(),
@@ -40,57 +41,60 @@ public class AuthController {
                     request.getFullName()
             );
 
-            // Load UserDetails từ UserService
-            var userDetails = userService.loadUserByUsername(registeredUser.getUsername());
+            // Load UserDetails để tạo token
+            UserDetails userDetails = userService.loadUserByUsername(registeredUser.getUsername());
 
-            // Kiểm tra null an toàn (dù thực tế loadUserByUsername sẽ ném exception nếu không tìm thấy)
-//            if (userDetails == null) {
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                        .body(new AuthResponse(null, "Không thể tạo token: user details không hợp lệ"));
-//            }
-
-            // Tạo JWT token
             String token = jwtUtil.generateToken(userDetails);
 
-            AuthResponse response = new AuthResponse(token, "Đăng ký thành công");
+            // Trả về token + user (có role)
+            AuthResponse response = new AuthResponse(token, "Đăng ký thành công", registeredUser);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
-            // Username hoặc email đã tồn tại
-            return ResponseEntity.badRequest().body(new AuthResponse(null, e.getMessage()));
+            return ResponseEntity.badRequest().body(new AuthResponse(null, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AuthResponse(null, "Lỗi server: " + e.getMessage()));
+                    .body(new AuthResponse(null, "Lỗi server: " + e.getMessage(), null));
         }
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
-            // Xác thực username/password
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-            // Lấy UserDetails từ principal
-            var userDetails = (org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal();
-
-            // Kiểm tra null an toàn
-            if (userDetails == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new AuthResponse(null, "Không thể tạo token: user details không hợp lệ"));
-            }
-
-            // Tạo JWT token
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtUtil.generateToken(userDetails);
 
-            AuthResponse response = new AuthResponse(token, "Đăng nhập thành công");
+            // Lấy user từ DB để trả role
+            User user = userService.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found after login"));
+
+            AuthResponse response = new AuthResponse(token, "Đăng nhập thành công", user);
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponse(null, "Tài khoản hoặc mật khẩu không đúng"));
+                    .body(new AuthResponse(null, "Tài khoản hoặc mật khẩu không đúng", null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AuthResponse(null, "Lỗi server: " + e.getMessage()));
+                    .body(new AuthResponse(null, "Lỗi server: " + e.getMessage(), null));
         }
+    }
+
+    // Thêm endpoint /auth/me để FE gọi lấy user info (role) khi cần
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser() {
+        // Lấy user từ SecurityContext (đã auth bằng JWT)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = auth.getName();
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(user);
     }
 }

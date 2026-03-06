@@ -15,21 +15,33 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
- * Cấu hình bảo mật cho ứng dụng quản lý công việc nhóm (CT240)
- * - Tương thích Spring Security 7.0: DaoAuthenticationProvider dùng constructor với UserDetailsService
+ * SecurityConfig cho Spring Boot 4.0.3 + Spring Security 7.0
+ * Đã fix circular dependency + CORS + dùng constructor mới của DaoAuthenticationProvider
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtUtil jwtUtil;
+
+    public SecurityConfig(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtUtil jwtUtil, UserService userService) throws Exception {
-        // Tạo filter instance ngay tại đây để tránh vòng lặp
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserService userService) throws Exception {
+        // Tạo filter trực tiếp để tránh vòng lặp
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtUtil, userService);
 
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
@@ -45,10 +57,10 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider(UserService userService) {
-        // Spring Security 7.0+: Constructor nhận UserDetailsService bắt buộc
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
+        // Cách đúng trong Spring Security 7.0: dùng constructor
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     @Bean
@@ -59,5 +71,19 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    // CORS cho phép Frontend Vite (port 5173) gọi Backend
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
