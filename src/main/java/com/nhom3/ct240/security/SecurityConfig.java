@@ -47,11 +47,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-
-                        // Khớp chính xác chuỗi "ROLE_MEMBER" từ Token bạn đã gửi
-                        .requestMatchers("/api/projects/**").hasAuthority("ROLE_MEMBER")
-
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/projects/**").authenticated() // Tất cả API dự án chỉ cần đăng nhập
+                        .anyRequest().authenticated() // Các API khác còn lại cũng cần đăng nhập
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider(userService))
