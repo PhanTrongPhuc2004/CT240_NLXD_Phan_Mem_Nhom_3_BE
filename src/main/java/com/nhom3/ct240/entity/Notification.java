@@ -15,7 +15,7 @@ public class Notification {
     private String userId;
     private NotificationType type;
     private String message;
-    private String link; // Đường dẫn đến resource liên quan (project, task,...)
+    private String link;
     private String relatedTaskId;
     private boolean read = false;
     private LocalDateTime createdAt = LocalDateTime.now();

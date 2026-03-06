@@ -1,5 +1,5 @@
 package com.nhom3.ct240.security;
-
+import org.springframework.http.HttpMethod;
 import com.nhom3.ct240.service.UserService;
 import com.nhom3.ct240.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
@@ -43,9 +43,14 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                // Trong SecurityConfig.java
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+
+                        // Khớp chính xác chuỗi "ROLE_MEMBER" từ Token bạn đã gửi
+                        .requestMatchers("/api/projects/**").hasAuthority("ROLE_MEMBER")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
