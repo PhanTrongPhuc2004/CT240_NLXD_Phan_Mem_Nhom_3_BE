@@ -1,6 +1,6 @@
 package com.nhom3.ct240.entity;
 
-import com.nhom3.ct240.entity.enums.Priority;
+import com.nhom3.ct240.entity.enums.TaskPriority;
 import com.nhom3.ct240.entity.enums.TaskStatus;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -18,8 +18,8 @@ public class Task {
     private String description;
     private String assigneeId;
     private LocalDateTime deadline;
-    private Priority priority = Priority.MEDIUM;
-    private TaskStatus status = TaskStatus.TODO;
+    private TaskPriority priority = TaskPriority.MEDIUM;
+    private TaskStatus status = TaskStatus.TO_DO;
     private String cancelReason;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
