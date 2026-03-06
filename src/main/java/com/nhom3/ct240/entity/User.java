@@ -5,17 +5,19 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * Entity đại diện cho người dùng trong hệ thống quản lý công việc nhóm
- */
 @Data
 @Document(collection = "users")
-public class User {
+public class User implements UserDetails {
 
     @Id
     private String id;
@@ -26,40 +28,58 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    private String password; // hashed password (sử dụng BCrypt)
+    private String password;
 
     private String fullName;
 
     private String avatarUrl;
 
-    private Role role = Role.MEMBER; // Enum: ADMIN, MANAGER, MEMBER
+    private Role role = Role.MEMBER;
 
-    private boolean active = true; // Trạng thái tài khoản (active/inactive)
+    private boolean active = true;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    // Danh sách dự án người dùng sở hữu (làm Project Owner)
     private List<String> ownedProjectIds = new ArrayList<>();
 
-    // Danh sách dự án người dùng tham gia (Member hoặc Manager phụ)
     private List<String> participatingProjectIds = new ArrayList<>();
 
-    // Nếu sau này cần thêm:
-    // private String phoneNumber;
-    // private String bio;
-    // private List<String> notificationPreferences;
+    // --- UserDetails Methods ---
 
-
-
-    public boolean isActive() {return active;}
-
-
-    public boolean isEnabled() {
-        return active;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
-    // Cập nhật updatedAt tự động khi thay đổi entity (nếu dùng @PreUpdate)
-    // Hoặc xử lý ở service layer
+    @Override
+    public String getPassword() {
+        return this.password;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Hoặc logic kiểm tra riêng
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Hoặc logic kiểm tra riêng
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Hoặc logic kiểm tra riêng
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.active;
+    }
 }

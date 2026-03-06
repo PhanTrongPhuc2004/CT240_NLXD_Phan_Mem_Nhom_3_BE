@@ -12,12 +12,13 @@ spring:
   # Cấu hình MongoDB - URI đầy đủ với tên database ở cuối (để tránh dùng mặc định "test")
   data:
     mongodb:
-      uri: mongodb://localhost:27017/ct240_task_db  # <-- Tên database chính thức ở đây!
       auto-index-creation: true                     # Tự tạo index cho @Indexed
 
   # Jackson - Tránh trả về các field null trong JSON response
   jackson:
     default-property-inclusion: non_null
+  mongodb:
+    uri: mongodb://localhost:27017/ct240_task_db
 
   web:
     cors:

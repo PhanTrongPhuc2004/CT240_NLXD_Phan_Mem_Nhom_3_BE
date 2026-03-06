@@ -17,10 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-/**
- * UserService triển khai UserDetailsService để hỗ trợ xác thực Spring Security + JWT
- * Đồng thời cung cấp các chức năng quản lý người dùng (register, update, find...)
- */
 @Service
 public class UserService implements UserDetailsService {
 
@@ -34,26 +30,9 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+        // Trả về chính đối tượng User của bạn vì nó đã implements UserDetails
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
-        Collection<? extends GrantedAuthority> authorities = getAuthorities(user.getRole());
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities(authorities)
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(!user.isActive())
-                .build();
-    }
-
-    private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
-        if (role == null) {
-            return Collections.emptyList();
-        }
-        String roleName = "ROLE_" + role.name();
-        return Collections.singletonList(new SimpleGrantedAuthority(roleName));
     }
 
     public User register(String username, String email, String password, String fullName) {
@@ -63,7 +42,6 @@ public class UserService implements UserDetailsService {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
-
 
         User user = new User();
         user.setUsername(username);
