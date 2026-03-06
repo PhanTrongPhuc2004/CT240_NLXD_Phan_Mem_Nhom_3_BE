@@ -19,5 +19,11 @@ public interface NotificationService {
 
     void markAllAsRead(String userId);
 
-    // TODO: method tạo thông báo tự động (gọi từ các service khác)
+    /**
+     * Tạo một thông báo mới cho một người dùng cụ thể.
+     * @param userId Người nhận thông báo.
+     * @param message Nội dung thông báo.
+     * @param link (Tùy chọn) Đường dẫn liên quan đến thông báo.
+     */
+    void createNotification(String userId, String message, String link);
 }

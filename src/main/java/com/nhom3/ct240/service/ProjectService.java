@@ -24,5 +24,15 @@ public interface ProjectService {
 
     Project getProjectDetail(String projectId, String currentUserId);
 
-    // Các method khác...
+    // CN_15: Phân quyền quản lý dự án
+    Project assignManager(String projectId, String userIdToAssign, String currentUserId);
+    Project removeManager(String projectId, String userIdToRemove, String currentUserId);
+    Project assignMember(String projectId, String userIdToAssign, String currentUserId);
+    Project removeMember(String projectId, String userIdToRemove, String currentUserId);
+
+    // CN_16: Tham gia/rời dự án
+    void requestToJoinProject(String projectId, String currentUserId);
+    Project approveJoinRequest(String projectId, String userIdToApprove, String currentUserId);
+    Project rejectJoinRequest(String projectId, String userIdToReject, String currentUserId);
+    void leaveProject(String projectId, String currentUserId);
 }

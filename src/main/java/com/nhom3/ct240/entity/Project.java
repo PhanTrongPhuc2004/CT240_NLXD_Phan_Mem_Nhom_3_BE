@@ -19,6 +19,7 @@ public class Project {
     private String ownerId;
     private List<String> managerIds = new ArrayList<>();
     private List<String> memberIds = new ArrayList<>();
+    private List<String> pendingMemberIds = new ArrayList<>(); // Danh sách user chờ duyệt
     private ProjectStatus status = ProjectStatus.ACTIVE;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

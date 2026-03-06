@@ -1,6 +1,7 @@
 package com.nhom3.ct240.controller;
 
 import com.nhom3.ct240.dto.ProjectDTO;
+import com.nhom3.ct240.dto.UserIdRequestDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.ProjectService;
@@ -94,48 +95,95 @@ public class ProjectController {
         }
     }
 
-    /**
-     * CN_15: Thêm/Xóa Manager (Phân quyền quản lý)
-     */
-    @PostMapping("/{projectId}/managers/{userId}")
-    public ResponseEntity<?> addManager(@PathVariable String projectId, @PathVariable String userId, @AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    // --- CN_15: Phân quyền quản lý dự án ---
+
+    @PostMapping("/{projectId}/managers")
+    public ResponseEntity<?> assignManager(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
-            // Giả định service có method addManager
-            // projectService.addManager(projectId, userId, currentUser.getId());
-            return ResponseEntity.ok("Manager added successfully");
+            Project updatedProject = projectService.assignManager(projectId, userIdRequest.getUserId(), currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
-    /**
-     * CN_16: Tham gia dự án
-     */
-    @PostMapping("/{projectId}/join")
-    public ResponseEntity<?> joinProject(@PathVariable String projectId, @AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    @DeleteMapping("/{projectId}/managers/{userId}")
+    public ResponseEntity<?> removeManager(@PathVariable String projectId, @PathVariable String userId, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
-            // Giả định service có method joinProject
-            // projectService.joinProject(projectId, currentUser.getId());
-            return ResponseEntity.ok("Joined project successfully");
+            Project updatedProject = projectService.removeManager(projectId, userId, currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
-    /**
-     * CN_16: Rời dự án
-     */
+    @PostMapping("/{projectId}/members")
+    public ResponseEntity<?> assignMember(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            Project updatedProject = projectService.assignMember(projectId, userIdRequest.getUserId(), currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{projectId}/members/{userId}")
+    public ResponseEntity<?> removeMember(@PathVariable String projectId, @PathVariable String userId, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            Project updatedProject = projectService.removeMember(projectId, userId, currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    // --- CN_16: Tham gia/rời dự án ---
+
+    @PostMapping("/{projectId}/join")
+    public ResponseEntity<?> requestToJoinProject(@PathVariable String projectId, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            projectService.requestToJoinProject(projectId, currentUser.getId());
+            return ResponseEntity.ok("Request to join project sent successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{projectId}/join/approve")
+    public ResponseEntity<?> approveJoinRequest(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            Project updatedProject = projectService.approveJoinRequest(projectId, userIdRequest.getUserId(), currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+    
+    @PostMapping("/{projectId}/join/reject")
+    public ResponseEntity<?> rejectJoinRequest(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal User currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            Project updatedProject = projectService.rejectJoinRequest(projectId, userIdRequest.getUserId(), currentUser.getId());
+            return ResponseEntity.ok(updatedProject);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/{projectId}/leave")
     public ResponseEntity<?> leaveProject(@PathVariable String projectId, @AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
-            // Giả định service có method leaveProject
-            // projectService.leaveProject(projectId, currentUser.getId());
-            return ResponseEntity.ok("Left project successfully");
+            projectService.leaveProject(projectId, currentUser.getId());
+            return ResponseEntity.ok("You have left the project.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
