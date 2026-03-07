@@ -26,6 +26,9 @@ public interface ProjectService {
 
     // Lấy danh sách dự án của người dùng
     List<Project> getAllProjects(String currentUserId);
+    
+    // Lấy danh sách TẤT CẢ dự án trong hệ thống (cho Admin)
+    List<Project> getAllSystemProjects();
 
     // CN_15: Phân quyền quản lý dự án
     Project assignManager(String projectId, String userIdToAssign, String currentUserId);

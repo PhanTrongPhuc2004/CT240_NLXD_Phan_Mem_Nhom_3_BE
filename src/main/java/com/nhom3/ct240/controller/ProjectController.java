@@ -9,10 +9,12 @@ import com.nhom3.ct240.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.Optional;
 
 @RestController
@@ -44,6 +46,28 @@ public class ProjectController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
+    // --- API MỚI CHO ADMIN/MANAGER ---
+    @GetMapping("/all-system")
+    public ResponseEntity<?> getAllSystemProjects(@AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        
+        // Kiểm tra quyền: Chỉ ADMIN hoặc MANAGER mới được xem toàn bộ dự án
+        Collection<? extends GrantedAuthority> authorities = currentUser.getAuthorities();
+        boolean isAdminOrManager = authorities.stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MANAGER"));
+
+        if (!isAdminOrManager) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Only Admin or Manager can view all system projects.");
+        }
+
+        try {
+            return ResponseEntity.ok(projectService.getAllSystemProjects());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+    // ---------------------------------
 
     @PostMapping
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
