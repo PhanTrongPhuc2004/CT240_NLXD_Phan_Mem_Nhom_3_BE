@@ -99,18 +99,24 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        if (!project.getMemberIds().contains(currentUserId)) {
-            throw new RuntimeException("You are not a member of this project");
-        }
+        // Cho phép xem chi tiết nếu là member HOẶC project là public (nếu có logic public)
+        // Hiện tại logic cũ chặn nếu không phải member.
+        // Để member có thể xem dự án khác và xin vào, ta cần BỎ chặn này hoặc nới lỏng nó.
+        
+        // Tạm thời cho phép xem chi tiết để thấy nút "Xin tham gia"
+        // if (!project.getMemberIds().contains(currentUserId)) {
+        //    throw new RuntimeException("You are not a member of this project");
+        // }
 
         return project;
     }
 
     @Override
     public List<Project> getAllProjects(String currentUserId) {
-        // Chỉ hiển thị các dự án do người dùng hiện tại sở hữu
-        return projectRepository.findByOwnerId(currentUserId);
+        // Trả về TẤT CẢ dự án để member có thể thấy và xin vào
+        return projectRepository.findAll();
     }
+
     @Override
     public List<Project> getAllSystemProjects() {
         return projectRepository.findAll();
