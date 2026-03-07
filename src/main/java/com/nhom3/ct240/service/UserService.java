@@ -1,4 +1,3 @@
-//src/main/java/com/nhom3/ct240/service/UserService.java
 package com.nhom3.ct240.service;
 
 import com.nhom3.ct240.entity.enums.Role;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -33,6 +33,10 @@ public class UserService implements UserDetailsService {
         // Trả về chính đối tượng User của bạn vì nó đã implements UserDetails
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
+    }
+
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
     }
 
     public User register(String username, String email, String password, String fullName) {
