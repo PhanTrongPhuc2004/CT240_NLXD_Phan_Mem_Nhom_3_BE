@@ -107,6 +107,11 @@ public class ProjectServiceImpl implements ProjectService {
         return project;
     }
 
+    @Override
+    public List<Project> getAllProjects(String currentUserId) {
+        return projectRepository.findByMemberIdsContaining(currentUserId);
+    }
+
     // --- CN_15: Phân quyền quản lý dự án ---
 
     @Override

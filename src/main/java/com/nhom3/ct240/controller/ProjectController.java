@@ -35,6 +35,16 @@ public class ProjectController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllProjects(@AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            return ResponseEntity.ok(projectService.getAllProjects(getUserId(currentUser)));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
