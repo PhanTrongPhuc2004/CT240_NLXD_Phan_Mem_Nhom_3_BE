@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto;
+package com.nhom3.ct240.dto.TaskDTO;
 
 import com.nhom3.ct240.entity.enums.TaskPriority; // Đã sửa thành TaskPriority
 import com.nhom3.ct240.entity.enums.TaskStatus;

@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto;
+package com.nhom3.ct240.dto.UserDTO;
 
 import lombok.Data;
 

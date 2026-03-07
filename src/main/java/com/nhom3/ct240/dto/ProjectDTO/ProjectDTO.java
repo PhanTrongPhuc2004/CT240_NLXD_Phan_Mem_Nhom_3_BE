@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto;
+package com.nhom3.ct240.dto.ProjectDTO;
 
 import com.nhom3.ct240.entity.enums.ProjectStatus;
 import lombok.Data;

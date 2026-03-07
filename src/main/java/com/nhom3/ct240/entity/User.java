@@ -1,3 +1,4 @@
+// src/main/java/com/nhom3/ct240/entity/User.java - ĐÃ CẬP NHẬT: Thêm các trường cần thiết cho profile
 package com.nhom3.ct240.entity;
 
 import com.nhom3.ct240.entity.enums.Role;
@@ -18,7 +19,6 @@ import java.util.List;
 @Data
 @Document(collection = "users")
 public class User implements UserDetails {
-
     @Id
     private String id;
 
@@ -42,12 +42,13 @@ public class User implements UserDetails {
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // Danh sách dự án sở hữu (owner)
     private List<String> ownedProjectIds = new ArrayList<>();
 
+    // Danh sách dự án đang tham gia (member/manager)
     private List<String> participatingProjectIds = new ArrayList<>();
 
     // --- UserDetails Methods ---
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
@@ -65,17 +66,17 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Hoặc logic kiểm tra riêng
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Hoặc logic kiểm tra riêng
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Hoặc logic kiểm tra riêng
+        return true;
     }
 
     @Override

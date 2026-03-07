@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto;
+package com.nhom3.ct240.dto.AuthDTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,6 +1,6 @@
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.CommentDTO;
+import com.nhom3.ct240.dto.CommentDTO.CommentDTO;
 import com.nhom3.ct240.entity.Comment;
 
 import java.util.List;

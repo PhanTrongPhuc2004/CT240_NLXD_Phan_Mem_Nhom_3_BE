@@ -1,21 +1,20 @@
-// src/main/java/com/nhom3/ct240/dto/AuthResponse.java
-package com.nhom3.ct240.dto;
+package com.nhom3.ct240.dto.AuthDTO;
 
-import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.dto.UserDTO.UserResponseDTO;
 import lombok.Data;
 
 @Data
 public class AuthResponse {
     private String token;
     private String message;
-    private User user;  // Thêm trường này để trả role và info user
+    private UserResponseDTO user;
 
     public AuthResponse(String token, String message) {
         this.token = token;
         this.message = message;
     }
 
-    public AuthResponse(String token, String message, User user) {
+    public AuthResponse(String token, String message, UserResponseDTO user) {
         this.token = token;
         this.message = message;
         this.user = user;

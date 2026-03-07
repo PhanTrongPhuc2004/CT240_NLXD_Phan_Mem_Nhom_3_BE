@@ -1,7 +1,7 @@
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.AssignTaskDTO;
-import com.nhom3.ct240.dto.CreateTaskDTO;
+import com.nhom3.ct240.dto.TaskDTO.AssignTaskDTO;
+import com.nhom3.ct240.dto.TaskDTO.CreateTaskDTO;
 import com.nhom3.ct240.entity.Task;
 import com.nhom3.ct240.entity.enums.TaskStatus;
 import com.nhom3.ct240.service.TaskService;

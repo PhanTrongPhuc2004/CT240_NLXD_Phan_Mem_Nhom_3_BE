@@ -1,19 +1,19 @@
+// src/main/java/com/nhom3/ct240/service/UserService.java - ĐÃ CẬP NHẬT: Đảm bảo tạo đầy đủ thuộc tính khi register
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.entity.enums.Role;
+import com.nhom3.ct240.dto.UserDTO.*;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.UserRepository;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +30,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Trả về chính đối tượng User của bạn vì nó đã implements UserDetails
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
     }
@@ -39,6 +38,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
 
+    @Transactional
     public User register(String username, String email, String password, String fullName) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
@@ -52,10 +52,14 @@ public class UserService implements UserDetailsService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setFullName(fullName);
+        user.setAvatarUrl(null); // Mặc định null, FE có thể update sau
         user.setRole(Role.MEMBER);
         user.setActive(true);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
+        user.setOwnedProjectIds(new ArrayList<>());
+        user.setParticipatingProjectIds(new ArrayList<>());
+
         return userRepository.save(user);
     }
 
@@ -79,39 +83,70 @@ public class UserService implements UserDetailsService {
         return userRepository.existsByEmail(email);
     }
 
-    public User updateProfile(User user) {
-        User existing = userRepository.findById(user.getId())
+    @Transactional
+    public User updateProfile(String username, UserUpdateDTO updateDTO) {
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
-        existing.setFullName(user.getFullName());
-        existing.setAvatarUrl(user.getAvatarUrl());
-        existing.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(existing);
-    }
 
-    public void changePassword(String userId, String oldPassword, String newPassword) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu cũ không đúng");
+        boolean hasChange = false;
+
+        if (updateDTO.getFullName() != null && !updateDTO.getFullName().isBlank()) {
+            user.setFullName(updateDTO.getFullName());
+            hasChange = true;
         }
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+
+        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().isBlank()) {
+            user.setAvatarUrl(updateDTO.getAvatarUrl());
+            hasChange = true;
+        }
+
+        if (hasChange) {
+            user.setUpdatedAt(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+
+        // Nếu không thay đổi gì → trả về user hiện tại (không save lại)
+        return user;
     }
 
-    public void setActive(String userId, boolean active) {
-        User user = userRepository.findById(userId)
+    @Transactional
+    public User updateUser(String id, UserUpdateDTO updateDTO) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
-        user.setActive(active);
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+
+        boolean hasChange = false;
+
+        if (updateDTO.getFullName() != null && !updateDTO.getFullName().isBlank()) {
+            user.setFullName(updateDTO.getFullName());
+            hasChange = true;
+        }
+
+        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().isBlank()) {
+            user.setAvatarUrl(updateDTO.getAvatarUrl());
+            hasChange = true;
+        }
+
+        if (hasChange) {
+            user.setUpdatedAt(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+
+        return user;
     }
 
-    public void updateRole(String userId, Role newRole) {
-        User user = userRepository.findById(userId)
+    @Transactional
+    public void deleteUser(String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public User updateRole(String id, Role newRole) {
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
         user.setRole(newRole);
         user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 }

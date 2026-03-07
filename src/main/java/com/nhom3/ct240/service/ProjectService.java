@@ -1,6 +1,6 @@
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.ProjectDTO;
+import com.nhom3.ct240.dto.ProjectDTO.ProjectDTO;
 import com.nhom3.ct240.entity.Project;
 
 import java.util.List;

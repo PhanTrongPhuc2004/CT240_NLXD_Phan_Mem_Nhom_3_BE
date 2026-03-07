@@ -1,6 +1,6 @@
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.NotificationDTO;
+import com.nhom3.ct240.dto.NotificationDTO.NotificationDTO;
 import com.nhom3.ct240.entity.Notification;
 import com.nhom3.ct240.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {

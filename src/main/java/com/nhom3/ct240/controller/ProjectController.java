@@ -1,7 +1,7 @@
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.ProjectDTO;
-import com.nhom3.ct240.dto.UserIdRequestDTO;
+import com.nhom3.ct240.dto.ProjectDTO.ProjectDTO;
+import com.nhom3.ct240.dto.UserDTO.UserIdRequestDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.ProjectService;
@@ -15,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/projects")
