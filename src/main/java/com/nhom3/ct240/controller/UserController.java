@@ -1,5 +1,6 @@
 package com.nhom3.ct240.controller;
 
+import com.nhom3.ct240.dto.UserIdsRequestDTO;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Controller xử lý quản lý người dùng
- * - CN_04: Cập nhật hồ sơ cá nhân
- * - CN_05: Xem hồ sơ cá nhân
- * - CN_06: Xem danh sách người dùng (Admin)
- * - CN_07: Thêm người dùng mới (Admin)
- * - CN_08: Chỉnh sửa thông tin người dùng (Admin)
- * - CN_09: Xóa/Khóa người dùng (Admin)
- * - CN_10: Phân vai trò cho người dùng (Admin)
- */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -66,6 +57,32 @@ public class UserController {
         }
 
         List<User> users = userService.findAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    // --- API TÌM KIẾM USER (Cho mọi user đã đăng nhập) ---
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(@RequestParam String keyword, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Keyword cannot be empty");
+        }
+
+        List<User> users = userService.searchUsers(keyword);
+        return ResponseEntity.ok(users);
+    }
+
+    // --- API LẤY DANH SÁCH USER THEO ID (Cho mọi user đã đăng nhập) ---
+    @PostMapping("/list")
+    public ResponseEntity<?> getUsersByIds(@RequestBody UserIdsRequestDTO request, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        
+        if (request.getUserIds() == null || request.getUserIds().isEmpty()) {
+            return ResponseEntity.badRequest().body("User IDs list cannot be empty");
+        }
+
+        List<User> users = userService.getUsersByIds(request.getUserIds());
         return ResponseEntity.ok(users);
     }
 }

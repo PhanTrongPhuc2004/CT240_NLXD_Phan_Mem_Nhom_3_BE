@@ -168,6 +168,17 @@ public class ProjectController {
         }
     }
 
+    @PostMapping("/{projectId}/join/cancel")
+    public ResponseEntity<?> cancelJoinRequest(@PathVariable String projectId, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        try {
+            projectService.cancelJoinRequest(projectId, getUserId(currentUser));
+            return ResponseEntity.ok("Join request cancelled successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/{projectId}/join/approve")
     public ResponseEntity<?> approveJoinRequest(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");

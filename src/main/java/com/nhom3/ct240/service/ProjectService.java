@@ -38,6 +38,7 @@ public interface ProjectService {
 
     // CN_16: Tham gia/rời dự án
     void requestToJoinProject(String projectId, String currentUserId);
+    void cancelJoinRequest(String projectId, String currentUserId); // <-- MỚI
     Project approveJoinRequest(String projectId, String userIdToApprove, String currentUserId);
     Project rejectJoinRequest(String projectId, String userIdToReject, String currentUserId);
     void leaveProject(String projectId, String currentUserId);

@@ -30,13 +30,20 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Trả về chính đối tượng User của bạn vì nó đã implements UserDetails
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng: " + username));
     }
 
     public List<User> findAllUsers() {
         return userRepository.findAll();
+    }
+
+    public List<User> searchUsers(String keyword) {
+        return userRepository.findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword, keyword);
+    }
+
+    public List<User> getUsersByIds(List<String> ids) {
+        return userRepository.findByIdIn(ids);
     }
 
     public User register(String username, String email, String password, String fullName) {
