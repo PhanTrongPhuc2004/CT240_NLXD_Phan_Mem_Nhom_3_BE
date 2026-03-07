@@ -219,6 +219,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public void cancelJoinRequest(String projectId, String currentUserId) {
+
+    }
+
+    @Override
     @Transactional
     public Project approveJoinRequest(String projectId, String userIdToApprove, String currentUserId) {
         Project project = getProjectAndCheckOwnerOrManagerPermission(projectId, currentUserId);
