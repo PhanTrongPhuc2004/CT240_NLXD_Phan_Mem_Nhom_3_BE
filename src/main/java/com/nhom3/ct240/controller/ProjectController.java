@@ -13,7 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -28,11 +28,28 @@ public class ProjectController {
         this.userService = userService;
     }
 
-    // Hàm phụ để lấy UserID nhanh, tránh viết lặp lại
+    // Hàm phụ để lấy UserID nhanh
     private String getUserId(UserDetails currentUser) {
         return userService.findByUsername(currentUser.getUsername())
                 .map(User::getId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // MỚI: GET /api/projects - Lấy danh sách dự án mà user đang tham gia
+    @GetMapping
+    public ResponseEntity<List<Project>> getAllProjects(@AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        try {
+            String currentUserId = getUserId(currentUser);
+            List<Project> projects = projectService.getProjectsByUserId(currentUserId);
+            return ResponseEntity.ok(projects);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
     @PostMapping

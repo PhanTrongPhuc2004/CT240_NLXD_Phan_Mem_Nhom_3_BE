@@ -1,3 +1,4 @@
+//src/main/java/com/nhom3/ct240/service/ProjectServiceImpl.java
 package com.nhom3.ct240.service;
 
 import com.nhom3.ct240.dto.ProjectDTO;
@@ -297,5 +298,16 @@ public class ProjectServiceImpl implements ProjectService {
     private User findUserById(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User to assign/remove not found."));
+    }
+
+    @Override
+    public List<Project> getProjectsByUserId(String userId) {
+        // Tìm tất cả project mà user là owner, manager hoặc member
+        List<Project> owned = projectRepository.findByOwnerId(userId);
+        List<Project> participating = projectRepository.findByMemberIdsContaining(userId);
+
+        // Gộp và loại trùng (nếu có)
+        owned.addAll(participating);
+        return owned.stream().distinct().toList();
     }
 }

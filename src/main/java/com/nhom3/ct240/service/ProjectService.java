@@ -24,6 +24,7 @@ public interface ProjectService {
 
     Project getProjectDetail(String projectId, String currentUserId);
 
+    List<Project> getProjectsByUserId(String userId);
     // CN_15: Phân quyền quản lý dự án
     Project assignManager(String projectId, String userIdToAssign, String currentUserId);
     Project removeManager(String projectId, String userIdToRemove, String currentUserId);
