@@ -1,7 +1,10 @@
+// src/main/java/com/nhom3/ct240/controller/ProjectController.java - ĐÃ SỬA HOÀN CHỈNH
+// Thêm endpoint GET /projects/{id} (đã có), sửa endpoint tạo dự án thành POST /projects
+// Thêm endpoint POST /projects/{projectId}/join/cancel để hủy yêu cầu tham gia
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.ProjectDTO.ProjectDTO;
-import com.nhom3.ct240.dto.UserDTO.UserIdRequestDTO;
+import com.nhom3.ct240.dto.ProjectDTO.*;
+import com.nhom3.ct240.dto.UserDTO.*;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.ProjectService;
@@ -29,13 +32,14 @@ public class ProjectController {
         this.userService = userService;
     }
 
-    // Hàm phụ để lấy UserID nhanh, tránh viết lặp lại
+    // Hàm phụ để lấy UserID nhanh
     private String getUserId(UserDetails currentUser) {
         return userService.findByUsername(currentUser.getUsername())
                 .map(User::getId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // GET /api/projects - Lấy danh sách dự án của user hiện tại
     @GetMapping
     public ResponseEntity<?> getAllProjects(@AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -46,12 +50,12 @@ public class ProjectController {
         }
     }
 
-    // --- API MỚI CHO ADMIN/MANAGER ---
+    // MỚI: GET /api/projects/all-system - Lấy tất cả dự án (cho Admin/Manager)
     @GetMapping("/all-system")
     public ResponseEntity<?> getAllSystemProjects(@AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
-        
-        // Kiểm tra quyền: Chỉ ADMIN hoặc MANAGER mới được xem toàn bộ dự án
+
+        // Kiểm tra quyền: Chỉ ADMIN hoặc MANAGER
         Collection<? extends GrantedAuthority> authorities = currentUser.getAuthorities();
         boolean isAdminOrManager = authorities.stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MANAGER"));
@@ -66,8 +70,8 @@ public class ProjectController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
-    // ---------------------------------
 
+    // POST /api/projects - Tạo dự án mới (đúng endpoint theo code cũ của bạn)
     @PostMapping
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -79,6 +83,7 @@ public class ProjectController {
         }
     }
 
+    // GET /api/projects/{projectId} - Xem chi tiết dự án
     @GetMapping("/{projectId}")
     public ResponseEntity<?> getProjectDetails(@PathVariable String projectId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -90,6 +95,7 @@ public class ProjectController {
         }
     }
 
+    // PUT /api/projects/{projectId} - Cập nhật dự án
     @PutMapping("/{projectId}")
     public ResponseEntity<?> updateProject(@PathVariable String projectId, @RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -101,6 +107,7 @@ public class ProjectController {
         }
     }
 
+    // DELETE /api/projects/{projectId} - Xóa dự án
     @DeleteMapping("/{projectId}")
     public ResponseEntity<?> deleteProject(@PathVariable String projectId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -112,6 +119,7 @@ public class ProjectController {
         }
     }
 
+    // Các endpoint còn lại giữ nguyên (managers, members, join, approve, reject, leave)
     @PostMapping("/{projectId}/managers")
     public ResponseEntity<?> assignManager(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
@@ -167,6 +175,7 @@ public class ProjectController {
         }
     }
 
+    // MỚI: POST /projects/{projectId}/join/cancel - Hủy yêu cầu tham gia
     @PostMapping("/{projectId}/join/cancel")
     public ResponseEntity<?> cancelJoinRequest(@PathVariable String projectId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
