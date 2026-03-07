@@ -22,7 +22,7 @@ public class CommentServiceImpl implements CommentService {
     @Autowired
     private UserRepository userRepository; // Dùng để lấy tên người dùng gắn vào DTO
 
-    // --- CN_24: THÊM BÌNH LUẬN ---
+    // CN_24: THÊM BÌNH LUẬN
     @Override
     public Comment addComment(String taskId, String content, String currentUserId) {
         // Ràng buộc Không cho phép gửi bình luận rỗng
@@ -39,7 +39,7 @@ public class CommentServiceImpl implements CommentService {
         return commentRepository.save(comment);
     }
 
-    // --- CN_25: XEM DANH SÁCH BÌNH LUẬN ---
+    // CN_25: XEM DANH SÁCH BÌNH LUẬN
     @Override
     public List<CommentDTO> getCommentsByTask(String taskId) {
         // 1. Lấy danh sách từ DB (đã lọc bỏ bình luận xóa mềm và sắp xếp mới nhất lên đầu)
@@ -65,7 +65,7 @@ public class CommentServiceImpl implements CommentService {
         return commentDTOs;
     }
 
-    // --- CN_26: SỬA BÌNH LUẬN ---
+    //CN_26: SỬA BÌNH LUẬN
     @Override
     public Comment updateComment(String commentId, String newContent, String currentUserId) {
         Comment comment = commentRepository.findById(commentId)
@@ -83,7 +83,7 @@ public class CommentServiceImpl implements CommentService {
         return commentRepository.save(comment);
     }
 
-    // --- CN_26: XÓA BÌNH LUẬN ---
+    //CN_26: XÓA BÌNH LUẬN
     @Override
     public void deleteComment(String commentId, String currentUserId) {
         Comment comment = commentRepository.findById(commentId)
