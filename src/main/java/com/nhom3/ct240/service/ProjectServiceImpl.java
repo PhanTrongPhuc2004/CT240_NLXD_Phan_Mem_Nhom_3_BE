@@ -3,6 +3,7 @@ package com.nhom3.ct240.service;
 import com.nhom3.ct240.dto.ProjectDTO.ProjectDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.ProjectRepository;
 import com.nhom3.ct240.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -35,6 +37,12 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = new Project();
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
+        
+        // Map các trường mới
+        project.setStartDate(dto.getStartDate());
+        project.setEndDate(dto.getEndDate());
+        project.setVisibility(dto.getVisibility() != null ? dto.getVisibility() : "private");
+
         project.setOwnerId(currentUserId);
         project.getMemberIds().add(currentUserId); // Owner cũng là member
         project.setCreatedAt(LocalDateTime.now());
@@ -61,6 +69,12 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
+        
+        // Map các trường mới khi update
+        if (dto.getStartDate() != null) project.setStartDate(dto.getStartDate());
+        if (dto.getEndDate() != null) project.setEndDate(dto.getEndDate());
+        if (dto.getVisibility() != null) project.setVisibility(dto.getVisibility());
+
         project.setUpdatedAt(LocalDateTime.now());
 
         return projectRepository.save(project);
@@ -72,8 +86,14 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        if (!project.getOwnerId().equals(currentUserId)) {
-            throw new RuntimeException("Only the project owner can delete this project");
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isOwner = project.getOwnerId().equals(currentUserId);
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("Only the project owner or admin can delete this project");
         }
         
         // Xóa project khỏi tất cả các thành viên
@@ -99,14 +119,18 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        // Cho phép xem chi tiết nếu là member HOẶC project là public (nếu có logic public)
-        // Hiện tại logic cũ chặn nếu không phải member.
-        // Để member có thể xem dự án khác và xin vào, ta cần BỎ chặn này hoặc nới lỏng nó.
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isMember = project.getMemberIds().contains(currentUserId) ||
+                           project.getOwnerId().equals(currentUserId) ||
+                           project.getManagerIds().contains(currentUserId);
         
-        // Tạm thời cho phép xem chi tiết để thấy nút "Xin tham gia"
-        // if (!project.getMemberIds().contains(currentUserId)) {
-        //    throw new RuntimeException("You are not a member of this project");
-        // }
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isMember && !isAdmin) {
+             throw new RuntimeException("You do not have permission to view this project");
+        }
 
         return project;
     }
@@ -219,8 +243,18 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public void cancelJoinRequest(String projectId, String currentUserId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
 
+        if (project.getPendingMemberIds().contains(currentUserId)) {
+            project.getPendingMemberIds().remove(currentUserId);
+            projectRepository.save(project);
+            System.out.println("DEBUG: Removed user " + currentUserId + " from pending list of project " + projectId);
+        } else {
+            System.out.println("DEBUG: User " + currentUserId + " is NOT in pending list of project " + projectId);
+        }
     }
 
     @Override

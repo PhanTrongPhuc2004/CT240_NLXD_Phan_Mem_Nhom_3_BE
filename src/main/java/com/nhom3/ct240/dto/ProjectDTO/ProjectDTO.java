@@ -14,12 +14,16 @@ public class ProjectDTO {
     private String id;
     private String name;
     private String description;
+    
+    // Các trường mới
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private String visibility; // "public" hoặc "private"
+
     private String ownerId;
     private List<String> managerIds;
     private List<String> memberIds;
     private ProjectStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // TODO: thêm fields như progress %, overdue tasks nếu cần cho CN_29
 }
