@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto.AuthDTO;
+package com.nhom3.ct240.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

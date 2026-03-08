@@ -1,9 +1,9 @@
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.AuthDTO.AuthResponse;
-import com.nhom3.ct240.dto.AuthDTO.LoginRequest;
-import com.nhom3.ct240.dto.AuthDTO.RegisterRequest;
-import com.nhom3.ct240.dto.UserDTO.UserResponseDTO;
+import com.nhom3.ct240.dto.auth.AuthResponse;
+import com.nhom3.ct240.dto.auth.LoginRequest;
+import com.nhom3.ct240.dto.auth.RegisterRequest;
+import com.nhom3.ct240.dto.user.UserResponseDTO;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.service.UserService;
 import com.nhom3.ct240.util.JwtUtil;

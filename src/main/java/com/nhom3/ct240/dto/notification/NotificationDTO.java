@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto.NotificationDTO;
+package com.nhom3.ct240.dto.notification;
 
 import com.nhom3.ct240.entity.enums.NotificationType;
 import java.time.LocalDateTime;

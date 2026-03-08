@@ -1,14 +1,14 @@
-package com.nhom3.ct240.dto.TaskDTO;
+package com.nhom3.ct240.dto.task;
 
-import com.nhom3.ct240.entity.enums.TaskPriority; // Đã sửa thành TaskPriority
+import com.nhom3.ct240.entity.enums.TaskPriority;
 import com.nhom3.ct240.entity.enums.TaskStatus;
-import lombok.Data; // Thêm Lombok Data để tự động tạo getters/setters/constructors
+import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
  * DTO cho công việc/task (dùng cho CN_17–CN_23, CN_29, CN_30)
  */
-@Data // Thêm annotation này
+@Data
 public class TaskDTO {
     private String id;
     private String projectId;
@@ -16,7 +16,7 @@ public class TaskDTO {
     private String description;
     private String assigneeId;
     private LocalDateTime deadline;
-    private TaskPriority priority; // Đã sửa thành TaskPriority
+    private TaskPriority priority;
     private TaskStatus status;
     private String cancelReason;
     private LocalDateTime createdAt;

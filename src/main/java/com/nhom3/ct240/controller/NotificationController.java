@@ -3,7 +3,7 @@ package com.nhom3.ct240.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nhom3.ct240.dto.NotificationDTO.NotificationDTO;
+import com.nhom3.ct240.dto.notification.NotificationDTO;
 import com.nhom3.ct240.service.NotificationService;
 
 import org.springframework.beans.factory.annotation.Autowired;

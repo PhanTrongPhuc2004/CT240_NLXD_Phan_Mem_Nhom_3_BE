@@ -1,6 +1,6 @@
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.ProjectDTO.ProjectDTO;
+import com.nhom3.ct240.dto.project.ProjectDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.entity.enums.Role;
@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {

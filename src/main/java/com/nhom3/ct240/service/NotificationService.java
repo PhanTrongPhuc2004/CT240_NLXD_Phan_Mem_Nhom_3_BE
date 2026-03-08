@@ -1,6 +1,6 @@
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.NotificationDTO.NotificationDTO;
+import com.nhom3.ct240.dto.notification.NotificationDTO;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 // src/main/java/com/nhom3/ct240/service/UserService.java - ĐÃ CẬP NHẬT: Đảm bảo updateProfile không thay đổi gì nếu không có dữ liệu mới
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.UserDTO.*;
+import com.nhom3.ct240.dto.user.UserUpdateDTO;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.UserRepository;

@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto.CommentDTO;
+package com.nhom3.ct240.dto.comment;
 
 import lombok.Data;
 import java.time.LocalDateTime;

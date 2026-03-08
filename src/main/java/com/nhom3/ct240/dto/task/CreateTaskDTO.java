@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto.TaskDTO;
+package com.nhom3.ct240.dto.task;
 
 import com.nhom3.ct240.entity.enums.TaskPriority;
 import jakarta.validation.constraints.Future;

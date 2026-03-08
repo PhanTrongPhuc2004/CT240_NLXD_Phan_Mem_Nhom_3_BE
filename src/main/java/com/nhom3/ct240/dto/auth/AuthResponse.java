@@ -1,6 +1,6 @@
-package com.nhom3.ct240.dto.AuthDTO;
+package com.nhom3.ct240.dto.auth;
 
-import com.nhom3.ct240.dto.UserDTO.UserResponseDTO;
+import com.nhom3.ct240.dto.user.UserResponseDTO;
 import lombok.Data;
 
 @Data

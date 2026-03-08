@@ -1,13 +1,11 @@
 // src/main/java/com/nhom3/ct240/controller/UserController.java - ĐÃ BỔ SUNG endpoint GET /users/{id}
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.*;
-import com.nhom3.ct240.dto.AuthDTO.RegisterRequest;
-import com.nhom3.ct240.dto.RoleUpdateDTO;
-import com.nhom3.ct240.dto.UserDTO.UserResponseDTO;
-import com.nhom3.ct240.dto.UserDTO.UserUpdateDTO;
+import com.nhom3.ct240.dto.auth.RegisterRequest;
+import com.nhom3.ct240.dto.user.RoleUpdateDTO;
+import com.nhom3.ct240.dto.user.UserResponseDTO;
+import com.nhom3.ct240.dto.user.UserUpdateDTO;
 import com.nhom3.ct240.entity.User;
-import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

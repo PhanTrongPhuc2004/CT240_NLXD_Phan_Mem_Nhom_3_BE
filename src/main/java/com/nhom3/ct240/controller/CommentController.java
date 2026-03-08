@@ -1,6 +1,6 @@
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.CommentDTO.CommentDTO;
+import com.nhom3.ct240.dto.comment.CommentDTO;
 import com.nhom3.ct240.entity.Comment;
 import com.nhom3.ct240.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
