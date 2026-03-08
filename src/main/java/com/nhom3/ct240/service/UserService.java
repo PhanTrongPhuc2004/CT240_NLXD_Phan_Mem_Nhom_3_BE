@@ -129,9 +129,13 @@ public class UserService implements UserDetailsService {
             user.setFullName(updateDTO.getFullName().trim());
             hasChange = true;
         }
-
         if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().trim().isEmpty()) {
             user.setAvatarUrl(updateDTO.getAvatarUrl().trim());
+            hasChange = true;
+        }
+        // ← THÊM HỖ TRỢ CẬP NHẬT TRẠNG THÁI
+        if (updateDTO.getActive() != null) {
+            user.setActive(updateDTO.getActive());
             hasChange = true;
         }
 
@@ -139,7 +143,6 @@ public class UserService implements UserDetailsService {
             user.setUpdatedAt(LocalDateTime.now());
             return userRepository.save(user);
         }
-
         return user;
     }
 

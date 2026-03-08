@@ -1,3 +1,4 @@
+// src/main/java/com/nhom3/ct240/controller/UserController.java - ĐÃ BỔ SUNG endpoint GET /users/{id}
 package com.nhom3.ct240.controller;
 
 import com.nhom3.ct240.dto.*;
@@ -6,6 +7,7 @@ import com.nhom3.ct240.dto.user.RoleUpdateDTO;
 import com.nhom3.ct240.dto.user.UserResponseDTO;
 import com.nhom3.ct240.dto.user.UserUpdateDTO;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,8 +30,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    // --- CÁC ENDPOINT TĨNH (PHẢI ĐẶsT TRƯỚC /{id}) ---
-
     // CN_05: Xem hồ sơ cá nhân (GET /users/me)
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserDetails currentUser) {
@@ -38,6 +38,19 @@ public class UserController {
         }
         User user = userService.findByUsername(currentUser.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        UserResponseDTO dto = new UserResponseDTO(
+                user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
+                user.getAvatarUrl(), user.getRole(), user.isActive()
+        );
+        return ResponseEntity.ok(dto);
+    }
+
+    // MỚI: GET /users/{id} - Lấy thông tin 1 user theo ID (dùng cho UserAvatarName, ProjectDetail,...)
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable String id) {
+        User user = userService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
         UserResponseDTO dto = new UserResponseDTO(
                 user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
                 user.getAvatarUrl(), user.getRole(), user.isActive()
@@ -61,45 +74,8 @@ public class UserController {
         return ResponseEntity.ok(dto);
     }
 
-    // API TÌM KIẾM USER (Cho mọi user đã đăng nhập) - GET /users/search
-    @GetMapping("/search")
-    public ResponseEntity<?> searchUsers(@RequestParam String keyword, @AuthenticationPrincipal UserDetails currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Keyword cannot be empty");
-        }
-
-        List<User> users = userService.searchUsers(keyword);
-        // Convert to DTO to hide sensitive info
-        List<UserResponseDTO> dtos = users.stream().map(user -> new UserResponseDTO(
-                user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
-                user.getAvatarUrl(), user.getRole(), user.isActive()
-        )).collect(Collectors.toList());
-        
-        return ResponseEntity.ok(dtos);
-    }
-
-    // API LẤY DANH SÁCH USER THEO ID (Cho mọi user đã đăng nhập) - POST /users/list
-    @PostMapping("/list")
-    public ResponseEntity<?> getUsersByIds(@RequestBody UserIdsRequestDTO request, @AuthenticationPrincipal UserDetails currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        
-        if (request.getUserIds() == null || request.getUserIds().isEmpty()) {
-            return ResponseEntity.badRequest().body("User IDs list cannot be empty");
-        }
-
-        List<User> users = userService.getUsersByIds(request.getUserIds());
-        List<UserResponseDTO> dtos = users.stream().map(user -> new UserResponseDTO(
-                user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
-                user.getAvatarUrl(), user.getRole(), user.isActive()
-        )).collect(Collectors.toList());
-
-        return ResponseEntity.ok(dtos);
-    }
-
-    // CN_06: Xem danh sách tất cả người dùng (Admin/Manager) - GET /users/all
-    @GetMapping("/all")
+    // CN_06: Xem danh sách người dùng (Admin/Manager) - GET /users
+    @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<UserResponseDTO> dtos = userService.findAllUsers().stream()
@@ -109,28 +85,6 @@ public class UserController {
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
-    }
-
-    // Thêm endpoint GET /users (tương đương /all) để tương thích với Frontend
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<List<UserResponseDTO>> getUsers() {
-        return getAllUsers();
-    }
-
-    // --- CÁC ENDPOINT ĐỘNG (ĐẶT SAU CÙNG) ---
-
-    // GET /users/{id} - Lấy thông tin 1 user theo ID
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable String id) {
-        User user = userService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
-
-        UserResponseDTO dto = new UserResponseDTO(
-                user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
-                user.getAvatarUrl(), user.getRole(), user.isActive()
-        );
-        return ResponseEntity.ok(dto);
     }
 
     // CN_07: Thêm người dùng mới (Admin) - POST /users
