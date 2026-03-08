@@ -1,4 +1,4 @@
-package com.nhom3.ct240.dto.UserDTO;
+package com.nhom3.ct240.dto.user;
 
 import com.nhom3.ct240.entity.enums.Role;
 import lombok.Data;
