@@ -1,4 +1,4 @@
-// src/main/java/com/nhom3/ct240/service/UserService.java - ĐÃ CẬP NHẬT: Đảm bảo tạo đầy đủ thuộc tính khi register
+// src/main/java/com/nhom3/ct240/service/UserService.java - ĐÃ CẬP NHẬT: Đảm bảo updateProfile không thay đổi gì nếu không có dữ liệu mới
 package com.nhom3.ct240.service;
 
 import com.nhom3.ct240.dto.UserDTO.*;
@@ -52,7 +52,7 @@ public class UserService implements UserDetailsService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setFullName(fullName);
-        user.setAvatarUrl(null); // Mặc định null, FE có thể update sau
+        user.setAvatarUrl(null); // Mặc định null
         user.setRole(Role.MEMBER);
         user.setActive(true);
         user.setCreatedAt(LocalDateTime.now());
@@ -90,13 +90,13 @@ public class UserService implements UserDetailsService {
 
         boolean hasChange = false;
 
-        if (updateDTO.getFullName() != null && !updateDTO.getFullName().isBlank()) {
-            user.setFullName(updateDTO.getFullName());
+        if (updateDTO.getFullName() != null && !updateDTO.getFullName().trim().isEmpty()) {
+            user.setFullName(updateDTO.getFullName().trim());
             hasChange = true;
         }
 
-        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().isBlank()) {
-            user.setAvatarUrl(updateDTO.getAvatarUrl());
+        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().trim().isEmpty()) {
+            user.setAvatarUrl(updateDTO.getAvatarUrl().trim());
             hasChange = true;
         }
 
@@ -105,7 +105,7 @@ public class UserService implements UserDetailsService {
             return userRepository.save(user);
         }
 
-        // Nếu không thay đổi gì → trả về user hiện tại (không save lại)
+        // Không có thay đổi → trả về user hiện tại (không save lại)
         return user;
     }
 
@@ -116,13 +116,13 @@ public class UserService implements UserDetailsService {
 
         boolean hasChange = false;
 
-        if (updateDTO.getFullName() != null && !updateDTO.getFullName().isBlank()) {
-            user.setFullName(updateDTO.getFullName());
+        if (updateDTO.getFullName() != null && !updateDTO.getFullName().trim().isEmpty()) {
+            user.setFullName(updateDTO.getFullName().trim());
             hasChange = true;
         }
 
-        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().isBlank()) {
-            user.setAvatarUrl(updateDTO.getAvatarUrl());
+        if (updateDTO.getAvatarUrl() != null && !updateDTO.getAvatarUrl().trim().isEmpty()) {
+            user.setAvatarUrl(updateDTO.getAvatarUrl().trim());
             hasChange = true;
         }
 

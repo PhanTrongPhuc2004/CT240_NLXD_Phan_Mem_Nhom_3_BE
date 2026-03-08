@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,12 +22,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/**
- * SecurityConfig cho Spring Boot 4.0.3 + Spring Security 7.0
- * Đã fix circular dependency + CORS + dùng constructor mới của DaoAuthenticationProvider
- */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // <-- THÊM DÒNG NÀY
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
@@ -43,13 +41,10 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                // Trong SecurityConfig.java
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/projects/**").authenticated() // Tất cả API dự án chỉ cần đăng nhập
-                        .requestMatchers("/api/users/**").authenticated() // Thêm dòng này cho chắc chắn
-                        .anyRequest().authenticated() // Các API khác còn lại cũng cần đăng nhập
+                        .anyRequest().authenticated() // Đơn giản hóa: Mọi request khác đều cần đăng nhập
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider(userService))
@@ -60,7 +55,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider(UserService userService) {
-        // Cách đúng trong Spring Security 7.0: dùng constructor
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
@@ -76,11 +70,9 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // CORS cho phép Frontend Vite (port 5173) gọi Backend
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Cho phép tất cả các origin để tránh lỗi CORS khi dev
         config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));

@@ -1,8 +1,11 @@
+// src/main/java/com/nhom3/ct240/controller/UserController.java - ĐÃ BỔ SUNG endpoint GET /users/{id}
 package com.nhom3.ct240.controller;
 
+import com.nhom3.ct240.dto.*;
 import com.nhom3.ct240.dto.AuthDTO.RegisterRequest;
 import com.nhom3.ct240.dto.RoleUpdateDTO;
-import com.nhom3.ct240.dto.UserDTO.*;
+import com.nhom3.ct240.dto.UserDTO.UserResponseDTO;
+import com.nhom3.ct240.dto.UserDTO.UserUpdateDTO;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.service.UserService;
@@ -35,6 +38,19 @@ public class UserController {
         }
         User user = userService.findByUsername(currentUser.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        UserResponseDTO dto = new UserResponseDTO(
+                user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
+                user.getAvatarUrl(), user.getRole(), user.isActive()
+        );
+        return ResponseEntity.ok(dto);
+    }
+
+    // MỚI: GET /users/{id} - Lấy thông tin 1 user theo ID (dùng cho UserAvatarName, ProjectDetail,...)
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable String id) {
+        User user = userService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
         UserResponseDTO dto = new UserResponseDTO(
                 user.getId(), user.getUsername(), user.getEmail(), user.getFullName(),
                 user.getAvatarUrl(), user.getRole(), user.isActive()

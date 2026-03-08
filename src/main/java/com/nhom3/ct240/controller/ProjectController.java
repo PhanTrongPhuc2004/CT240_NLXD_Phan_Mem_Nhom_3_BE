@@ -9,6 +9,7 @@ import com.nhom3.ct240.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,7 +30,6 @@ public class ProjectController {
         this.userService = userService;
     }
 
-    // Hàm phụ để lấy UserID nhanh, tránh viết lặp lại
     private String getUserId(UserDetails currentUser) {
         return userService.findByUsername(currentUser.getUsername())
                 .map(User::getId)
@@ -46,29 +46,18 @@ public class ProjectController {
         }
     }
 
-    // --- API MỚI CHO ADMIN/MANAGER ---
     @GetMapping("/all-system")
-    public ResponseEntity<?> getAllSystemProjects(@AuthenticationPrincipal UserDetails currentUser) {
-        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
-        
-        // Kiểm tra quyền: Chỉ ADMIN hoặc MANAGER mới được xem toàn bộ dự án
-        Collection<? extends GrantedAuthority> authorities = currentUser.getAuthorities();
-        boolean isAdminOrManager = authorities.stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_MANAGER"));
-
-        if (!isAdminOrManager) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. Only Admin or Manager can view all system projects.");
-        }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<?> getAllSystemProjects() {
         try {
             return ResponseEntity.ok(projectService.getAllSystemProjects());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
-    // ---------------------------------
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProject(@RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -91,6 +80,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> updateProject(@PathVariable String projectId, @RequestBody ProjectDTO projectDTO, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -102,6 +92,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}")
+    // Bỏ @PreAuthorize để cho phép cả Admin và Owner (Member) gọi. Logic kiểm tra quyền nằm ở Service.
     public ResponseEntity<?> deleteProject(@PathVariable String projectId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -113,6 +104,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/managers")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> assignManager(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -124,6 +116,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/managers/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> removeManager(@PathVariable String projectId, @PathVariable String userId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -135,6 +128,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/members")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> assignMember(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -146,6 +140,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/members/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> removeMember(@PathVariable String projectId, @PathVariable String userId, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -179,6 +174,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/join/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> approveJoinRequest(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
@@ -190,6 +186,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/join/reject")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> rejectJoinRequest(@PathVariable String projectId, @RequestBody UserIdRequestDTO userIdRequest, @AuthenticationPrincipal UserDetails currentUser) {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         try {
