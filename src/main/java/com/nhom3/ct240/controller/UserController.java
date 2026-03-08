@@ -1,7 +1,6 @@
 // src/main/java/com/nhom3/ct240/controller/UserController.java - ĐÃ BỔ SUNG endpoint GET /users/{id}
 package com.nhom3.ct240.controller;
 
-import com.nhom3.ct240.dto.*;
 import com.nhom3.ct240.dto.auth.RegisterRequest;
 import com.nhom3.ct240.dto.user.RoleUpdateDTO;
 import com.nhom3.ct240.dto.user.UserResponseDTO;
