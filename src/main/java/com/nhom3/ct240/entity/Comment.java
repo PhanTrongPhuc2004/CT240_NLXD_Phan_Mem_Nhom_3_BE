@@ -19,5 +19,5 @@ public class Comment {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
     private boolean edited = false;
-    private boolean isDeleted = false;
+    private boolean deleted = false;
 }
