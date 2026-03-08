@@ -1,7 +1,6 @@
-// src/main/java/com/nhom3/ct240/service/UserService.java - ĐÃ CẬP NHẬT: Đảm bảo updateProfile không thay đổi gì nếu không có dữ liệu mới
 package com.nhom3.ct240.service;
 
-import com.nhom3.ct240.dto.user.UserUpdateDTO;
+import com.nhom3.ct240.dto.user.*;
 import com.nhom3.ct240.entity.User;
 import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.UserRepository;
@@ -36,6 +35,16 @@ public class UserService implements UserDetailsService {
 
     public List<User> findAllUsers() {
         return userRepository.findAll();
+    }
+
+    // Phương thức tìm kiếm user
+    public List<User> searchUsers(String keyword) {
+        return userRepository.findByUsernameContainingIgnoreCaseOrFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword, keyword);
+    }
+
+    // Phương thức lấy danh sách user theo ID
+    public List<User> getUsersByIds(List<String> ids) {
+        return userRepository.findByIdIn(ids);
     }
 
     @Transactional
