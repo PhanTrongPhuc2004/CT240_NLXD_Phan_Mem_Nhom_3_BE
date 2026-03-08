@@ -15,9 +15,9 @@ public class Comment {
     private String taskId;
     private String userId;
     private String content;
-    private List<String> attachmentUrls; //c_n tao file
+    private List<String> attachmentUrls;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
     private boolean edited = false;
-    private boolean isDeleted = false; //phuc vu xoa mem
+    private boolean isDeleted = false;
 }
