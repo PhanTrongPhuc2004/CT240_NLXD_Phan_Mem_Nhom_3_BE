@@ -43,7 +43,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentDTO> getCommentsByTask(String taskId) {
         // 1. Lấy danh sách từ DB (đã lọc bỏ bình luận xóa mềm và sắp xếp mới nhất lên đầu)
-        List<Comment> comments = commentRepository.findByTaskIdAndIsDeletedFalseOrderByCreatedAtDesc(taskId);
+        List<Comment> comments = commentRepository.findByTaskIdAndDeletedFalseOrderByCreatedAtDesc(taskId);
 
         // 2. Chuyển đổi từ Entity sang DTO để gửi về Frontend
         List<CommentDTO> commentDTOs = new ArrayList<>();

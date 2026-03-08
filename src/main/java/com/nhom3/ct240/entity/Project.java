@@ -17,6 +17,12 @@ public class Project {
     private String name;
     private String description;
     private String ownerId;
+    
+    // Các trường mới
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private String visibility = "private"; // Mặc định là private
+
     private List<String> managerIds = new ArrayList<>();
     private List<String> memberIds = new ArrayList<>();
     private List<String> pendingMemberIds = new ArrayList<>(); // Danh sách user chờ duyệt

@@ -20,4 +20,7 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
 
     // Bình luận của user trong task (nếu cần lọc)
     List<Comment> findByTaskIdAndUserId(String taskId, String userId);
+
+    // Lấy danh sách bình luận chưa bị xóa, sắp xếp mới nhất trước
+    List<Comment> findByTaskIdAndDeletedFalseOrderByCreatedAtDesc(String taskId);
 }
