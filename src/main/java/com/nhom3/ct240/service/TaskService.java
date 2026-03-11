@@ -36,11 +36,18 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
     }
 
+    // === LOGIC PHÂN QUYỀN ĐÃ CẬP NHẬT ===
+
+    /**
+     * Kiểm tra quyền quản lý (Manager/Owner) cho các hành động Ghi/Sửa/Xóa.
+     * ADMIN SẼ BỊ CHẶN Ở ĐÂY.
+     */
     private void checkManagerPermission(String projectId, String username) {
         User user = getUserByUsername(username);
 
+        // THAY ĐỔI 1: Chặn Admin thực hiện các hành động nguy hiểm.
         if (user.getRole() == Role.ADMIN) {
-            return;
+            throw new AccessDeniedException("Admin cannot create, update, or delete tasks.");
         }
 
         Project project = projectRepository.findById(projectId)
@@ -51,9 +58,30 @@ public class TaskService {
         }
     }
 
+    /**
+     * Kiểm tra quyền thành viên (Member) cho các hành động Chỉ Đọc.
+     * ADMIN VẪN ĐƯỢC PHÉP ĐỌC.
+     */
+    private void checkMemberPermission(String projectId, String username) {
+        User user = getUserByUsername(username);
+
+        // Giữ nguyên: Admin có quyền xem
+        if (user.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (!project.getOwnerId().equals(user.getId()) && !project.getManagerIds().contains(user.getId()) && !project.getMemberIds().contains(user.getId())) {
+            throw new AccessDeniedException("User is not a member of this project");
+        }
+    }
+
+    // === CÁC PHƯƠNG THỨC NGHIỆP VỤ ===
+
     public Task createTask(CreateTaskDTO createTaskDTO, String creatorUsername) {
-        User creator = getUserByUsername(creatorUsername);
-        checkManagerPermission(createTaskDTO.getProjectId(), creator.getUsername());
+        checkManagerPermission(createTaskDTO.getProjectId(), creatorUsername);
 
         if (createTaskDTO.getAssigneeId() != null && !createTaskDTO.getAssigneeId().isEmpty()) {
             Project project = projectRepository.findById(createTaskDTO.getProjectId())
@@ -83,11 +111,10 @@ public class TaskService {
     }
 
     public Task updateTask(String taskId, Task taskDetails, String editorUsername) {
-        User editor = getUserByUsername(editorUsername);
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
 
-        checkManagerPermission(existingTask.getProjectId(), editor.getUsername());
+        checkManagerPermission(existingTask.getProjectId(), editorUsername);
 
         existingTask.setTitle(taskDetails.getTitle());
         existingTask.setDescription(taskDetails.getDescription());
@@ -98,18 +125,16 @@ public class TaskService {
     }
 
     public void deleteTask(String taskId, String deleterUsername) {
-        User deleter = getUserByUsername(deleterUsername);
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
-        checkManagerPermission(existingTask.getProjectId(), deleter.getUsername());
+        checkManagerPermission(existingTask.getProjectId(), deleterUsername);
         taskRepository.deleteById(taskId);
     }
 
     public Task assignTask(String taskId, String assigneeId, String assignerUsername) {
-        User assigner = getUserByUsername(assignerUsername);
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
-        checkManagerPermission(existingTask.getProjectId(), assigner.getUsername());
+        checkManagerPermission(existingTask.getProjectId(), assignerUsername);
 
         Project project = projectRepository.findById(existingTask.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
@@ -132,15 +157,15 @@ public class TaskService {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
 
-        if (updater.getRole() != Role.ADMIN) {
-            Project project = projectRepository.findById(existingTask.getProjectId())
-                    .orElseThrow(() -> new RuntimeException("Project not found"));
-            boolean isManager = project.getOwnerId().equals(updater.getId()) || project.getManagerIds().contains(updater.getId());
-            boolean isAssignee = existingTask.getAssigneeId() != null && existingTask.getAssigneeId().equals(updater.getId());
+        // THAY ĐỔI 2: Bỏ qua ngoại lệ cho Admin, áp dụng quy tắc chung cho tất cả.
+        Project project = projectRepository.findById(existingTask.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        boolean isManager = project.getOwnerId().equals(updater.getId()) || project.getManagerIds().contains(updater.getId());
+        boolean isAssignee = existingTask.getAssigneeId() != null && existingTask.getAssigneeId().equals(updater.getId());
 
-            if (!isManager && !isAssignee) {
-                throw new AccessDeniedException("User does not have permission to update task status");
-            }
+        // Admin sẽ không phải là isManager hoặc isAssignee của task, nên sẽ bị chặn ở đây.
+        if (!isManager && !isAssignee) {
+            throw new AccessDeniedException("User does not have permission to update task status");
         }
 
         existingTask.setStatus(newStatus);
@@ -153,31 +178,14 @@ public class TaskService {
         return taskRepository.save(existingTask);
     }
 
-    private void checkMemberPermission(String projectId, String username) {
-        User user = getUserByUsername(username);
-
-        if (user.getRole() == Role.ADMIN) {
-            return;
-        }
-
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
-
-        if (!project.getOwnerId().equals(user.getId()) && !project.getManagerIds().contains(user.getId()) && !project.getMemberIds().contains(user.getId())) {
-            throw new AccessDeniedException("User is not a member of this project");
-        }
-    }
-
     public Optional<Task> findTaskById(String taskId, String viewerUsername) {
-        User viewer = getUserByUsername(viewerUsername);
         Optional<Task> taskOpt = taskRepository.findById(taskId);
-        taskOpt.ifPresent(task -> checkMemberPermission(task.getProjectId(), viewer.getUsername()));
+        taskOpt.ifPresent(task -> checkMemberPermission(task.getProjectId(), viewerUsername));
         return taskOpt;
     }
 
     public List<Task> findTasksByProjectId(String projectId, String viewerUsername) {
-        User viewer = getUserByUsername(viewerUsername);
-        checkMemberPermission(projectId, viewer.getUsername());
+        checkMemberPermission(projectId, viewerUsername);
         return taskRepository.findByProjectId(projectId);
     }
     
@@ -186,8 +194,7 @@ public class TaskService {
     }
 
     public List<Task> getTasksByProjectAndStatus(String projectId, TaskStatus filterStatus, String viewerUsername) {
-        User viewer = getUserByUsername(viewerUsername);
-        checkMemberPermission(projectId, viewer.getUsername());
+        checkMemberPermission(projectId, viewerUsername);
         List<Task> tasks = taskRepository.findByProjectId(projectId);
         if (filterStatus != null) {
             return tasks.stream()
