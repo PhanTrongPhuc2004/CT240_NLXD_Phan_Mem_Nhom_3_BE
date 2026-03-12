@@ -7,6 +7,7 @@ import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.ProjectRepository;
 import com.nhom3.ct240.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -244,7 +245,17 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project approveJoinRequest(String projectId, String userIdToApprove, String currentUserId) {
-        Project project = getProjectAndCheckOwnerOrManagerPermission(projectId, currentUserId);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isProjectManager = project.getOwnerId().equals(currentUserId) || project.getManagerIds().contains(currentUserId);
+        boolean isSystemAdminOrManager = currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.MANAGER;
+
+        if (!isProjectManager && !isSystemAdminOrManager) {
+            throw new AccessDeniedException("You do not have permission to approve join requests for this project.");
+        }
 
         if (!project.getPendingMemberIds().contains(userIdToApprove)) {
             throw new RuntimeException("User has not requested to join this project.");

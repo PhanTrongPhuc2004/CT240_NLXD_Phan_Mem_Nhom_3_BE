@@ -39,13 +39,15 @@ public class TaskService {
     private void checkManagerPermission(String projectId, String username) {
         User user = getUserByUsername(username);
 
-        if (user.getRole() == Role.ADMIN) {
-            return; // Admin có quyền quản lý
+        // Admin và Manager hệ thống có toàn quyền
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            return;
         }
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
+        // Owner và Manager của dự án cũng có quyền
         if (!project.getOwnerId().equals(user.getId()) && !project.getManagerIds().contains(user.getId())) {
             throw new AccessDeniedException("User is not a manager of this project");
         }
@@ -54,7 +56,7 @@ public class TaskService {
     private void checkMemberPermission(String projectId, String username) {
         User user = getUserByUsername(username);
 
-        if (user.getRole() == Role.ADMIN) {
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
             return;
         }
 
