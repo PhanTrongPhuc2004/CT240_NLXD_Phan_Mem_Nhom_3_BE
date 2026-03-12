@@ -36,18 +36,11 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
     }
 
-    // === LOGIC PHÂN QUYỀN ĐÃ CẬP NHẬT ===
-
-    /**
-     * Kiểm tra quyền quản lý (Manager/Owner) cho các hành động Ghi/Sửa/Xóa.
-     * ADMIN SẼ BỊ CHẶN Ở ĐÂY.
-     */
     private void checkManagerPermission(String projectId, String username) {
         User user = getUserByUsername(username);
 
-        // THAY ĐỔI 1: Chặn Admin thực hiện các hành động nguy hiểm.
         if (user.getRole() == Role.ADMIN) {
-            throw new AccessDeniedException("Admin cannot create, update, or delete tasks.");
+            return; // Admin có quyền quản lý
         }
 
         Project project = projectRepository.findById(projectId)
@@ -58,14 +51,9 @@ public class TaskService {
         }
     }
 
-    /**
-     * Kiểm tra quyền thành viên (Member) cho các hành động Chỉ Đọc.
-     * ADMIN VẪN ĐƯỢC PHÉP ĐỌC.
-     */
     private void checkMemberPermission(String projectId, String username) {
         User user = getUserByUsername(username);
 
-        // Giữ nguyên: Admin có quyền xem
         if (user.getRole() == Role.ADMIN) {
             return;
         }
@@ -73,12 +61,10 @@ public class TaskService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        if (!project.getOwnerId().equals(user.getId()) && !project.getManagerIds().contains(user.getId()) && !project.getMemberIds().contains(user.getId())) {
+        if (!project.getMemberIds().contains(user.getId())) {
             throw new AccessDeniedException("User is not a member of this project");
         }
     }
-
-    // === CÁC PHƯƠNG THỨC NGHIỆP VỤ ===
 
     public Task createTask(CreateTaskDTO createTaskDTO, String creatorUsername) {
         checkManagerPermission(createTaskDTO.getProjectId(), creatorUsername);
@@ -87,9 +73,7 @@ public class TaskService {
             Project project = projectRepository.findById(createTaskDTO.getProjectId())
                     .orElseThrow(() -> new RuntimeException("Project not found"));
             
-            boolean isMember = project.getMemberIds().contains(createTaskDTO.getAssigneeId())
-                    || project.getManagerIds().contains(createTaskDTO.getAssigneeId())
-                    || project.getOwnerId().equals(createTaskDTO.getAssigneeId());
+            boolean isMember = project.getMemberIds().contains(createTaskDTO.getAssigneeId());
 
             if (!isMember) {
                 throw new RuntimeException("Assignee is not a member of this project");
@@ -139,9 +123,7 @@ public class TaskService {
         Project project = projectRepository.findById(existingTask.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        boolean isMember = project.getMemberIds().contains(assigneeId)
-                || project.getManagerIds().contains(assigneeId)
-                || project.getOwnerId().equals(assigneeId);
+        boolean isMember = project.getMemberIds().contains(assigneeId);
 
         if (!isMember) {
             throw new RuntimeException("Assignee is not a member of this project");
@@ -157,14 +139,14 @@ public class TaskService {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
 
-        // THAY ĐỔI 2: Bỏ qua ngoại lệ cho Admin, áp dụng quy tắc chung cho tất cả.
         Project project = projectRepository.findById(existingTask.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
+            
+        boolean isAdmin = updater.getRole() == Role.ADMIN;
         boolean isManager = project.getOwnerId().equals(updater.getId()) || project.getManagerIds().contains(updater.getId());
         boolean isAssignee = existingTask.getAssigneeId() != null && existingTask.getAssigneeId().equals(updater.getId());
 
-        // Admin sẽ không phải là isManager hoặc isAssignee của task, nên sẽ bị chặn ở đây.
-        if (!isManager && !isAssignee) {
+        if (!isAdmin && !isManager && !isAssignee) {
             throw new AccessDeniedException("User does not have permission to update task status");
         }
 

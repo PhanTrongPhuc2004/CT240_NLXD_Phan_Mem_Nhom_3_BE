@@ -37,7 +37,6 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
         
-        // Map các trường mới
         project.setStartDate(dto.getStartDate());
         project.setEndDate(dto.getEndDate());
         project.setVisibility(dto.getVisibility() != null ? dto.getVisibility() : "private");
@@ -69,7 +68,6 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(dto.getName());
         project.setDescription(dto.getDescription());
         
-        // Map các trường mới khi update
         if (dto.getStartDate() != null) project.setStartDate(dto.getStartDate());
         if (dto.getEndDate() != null) project.setEndDate(dto.getEndDate());
         if (dto.getVisibility() != null) project.setVisibility(dto.getVisibility());
@@ -95,7 +93,6 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Only the project owner or admin can delete this project");
         }
         
-        // Xóa project khỏi tất cả các thành viên
         project.getMemberIds().forEach(memberId -> {
             userRepository.findById(memberId).ifPresent(user -> {
                 user.getParticipatingProjectIds().remove(projectId);
@@ -103,7 +100,6 @@ public class ProjectServiceImpl implements ProjectService {
             });
         });
 
-        // Xóa project khỏi owner
         User owner = userRepository.findById(project.getOwnerId()).orElse(null);
         if (owner != null) {
             owner.getOwnedProjectIds().remove(projectId);
@@ -121,13 +117,10 @@ public class ProjectServiceImpl implements ProjectService {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean isMember = project.getMemberIds().contains(currentUserId) ||
-                           project.getOwnerId().equals(currentUserId) ||
-                           project.getManagerIds().contains(currentUserId);
-        
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        boolean isMember = project.getMemberIds().contains(currentUserId);
+        boolean isAdminOrManager = currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.MANAGER;
 
-        if (!isMember && !isAdmin) {
+        if (!isMember && !isAdminOrManager) {
              throw new RuntimeException("You do not have permission to view this project");
         }
 
@@ -136,7 +129,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getAllProjects(String currentUserId) {
-        // Trả về TẤT CẢ dự án để member có thể thấy và xin vào
         return projectRepository.findAll();
     }
 
@@ -144,8 +136,6 @@ public class ProjectServiceImpl implements ProjectService {
     public List<Project> getAllSystemProjects() {
         return projectRepository.findAll();
     }
-
-    // --- CN_15: Phân quyền quản lý dự án ---
 
     @Override
     @Transactional
@@ -198,13 +188,12 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectAndCheckOwnerOrManagerPermission(projectId, currentUserId);
         User userToRemove = findUserById(userIdToRemove);
 
-        // Owner không thể bị xóa khỏi dự án
         if (project.getOwnerId().equals(userIdToRemove)) {
             throw new RuntimeException("Cannot remove the project owner.");
         }
 
         project.getMemberIds().remove(userIdToRemove);
-        project.getManagerIds().remove(userIdToRemove); // Nếu là manager cũng xóa luôn
+        project.getManagerIds().remove(userIdToRemove);
         userToRemove.getParticipatingProjectIds().remove(projectId);
         userRepository.save(userToRemove);
         
@@ -212,8 +201,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         return projectRepository.save(project);
     }
-
-    // --- CN_16: Tham gia/rời dự án ---
 
     @Override
     @Transactional
@@ -232,10 +219,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.getPendingMemberIds().add(currentUserId);
         projectRepository.save(project);
         
-        // Gửi thông báo cho Owner
         notificationService.createNotification(project.getOwnerId(), "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(), null);
         
-        // Gửi thông báo cho các Manager
         for (String managerId : project.getManagerIds()) {
             notificationService.createNotification(managerId, "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(), null);
         }
@@ -310,7 +295,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         project.getMemberIds().remove(currentUserId);
-        project.getManagerIds().remove(currentUserId); // Nếu là manager cũng xóa luôn
+        project.getManagerIds().remove(currentUserId);
         
         User user = findUserById(currentUserId);
         user.getParticipatingProjectIds().remove(projectId);
@@ -318,16 +303,12 @@ public class ProjectServiceImpl implements ProjectService {
         
         projectRepository.save(project);
         
-        // Gửi thông báo cho Owner
         notificationService.createNotification(project.getOwnerId(), "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(), null);
         
-        // Gửi thông báo cho các Manager
         for (String managerId : project.getManagerIds()) {
             notificationService.createNotification(managerId, "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(), null);
         }
     }
-
-    // --- Helper Methods ---
 
     private Project getProjectAndCheckOwnerPermission(String projectId, String currentUserId) {
         Project project = projectRepository.findById(projectId)
