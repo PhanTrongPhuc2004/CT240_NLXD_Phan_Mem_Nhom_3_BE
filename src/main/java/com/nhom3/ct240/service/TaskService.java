@@ -4,6 +4,7 @@ import com.nhom3.ct240.dto.task.CreateTaskDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.Task;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.NotificationType;
 import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.entity.enums.TaskStatus;
 import com.nhom3.ct240.repository.ProjectRepository;
@@ -23,7 +24,8 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-
+    @Autowired
+    private NotificationService notificationService; // Thêm sự kiện thông báo
     @Autowired
     public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
@@ -70,13 +72,10 @@ public class TaskService {
 
     public Task createTask(CreateTaskDTO createTaskDTO, String creatorUsername) {
         checkManagerPermission(createTaskDTO.getProjectId(), creatorUsername);
-
+        Project project = projectRepository.findById(createTaskDTO.getProjectId())
+                .orElseThrow(() -> new RuntimeException("Project not found"));
         if (createTaskDTO.getAssigneeId() != null && !createTaskDTO.getAssigneeId().isEmpty()) {
-            Project project = projectRepository.findById(createTaskDTO.getProjectId())
-                    .orElseThrow(() -> new RuntimeException("Project not found"));
-            
             boolean isMember = project.getMemberIds().contains(createTaskDTO.getAssigneeId());
-
             if (!isMember) {
                 throw new RuntimeException("Assignee is not a member of this project");
             }
@@ -92,8 +91,16 @@ public class TaskService {
         task.setStatus(TaskStatus.TO_DO);
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
-
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+        // Gửi thông báo nếu có người được gán
+        if (savedTask.getAssigneeId() != null) {
+            notificationService.createNotification(
+                    savedTask.getAssigneeId(),
+                    "Công việc mới: [" + savedTask.getTitle() + "] trong dự án [" + project.getName() + "]",
+                    NotificationType.TASK_ASSIGNED, project.getId(), savedTask.getId()
+            );
+        }
+        return savedTask;
     }
 
     public Task updateTask(String taskId, Task taskDetails, String editorUsername) {
@@ -133,7 +140,18 @@ public class TaskService {
 
         existingTask.setAssigneeId(assigneeId);
         existingTask.setUpdatedAt(LocalDateTime.now());
-        return taskRepository.save(existingTask);
+        Task savedTask = taskRepository.save(existingTask);
+
+        // TRIGGER: Thông báo cho Member (Assignee)
+        notificationService.createNotification(
+                assigneeId,
+                "Công việc mới: [" + savedTask.getTitle() + "] trong dự án [" + project.getName() + "]",
+                NotificationType.TASK_ASSIGNED,
+                project.getId(),
+                savedTask.getId()
+        );
+
+        return savedTask;
     }
 
     public Task updateTaskStatus(String taskId, TaskStatus newStatus, String cancelReason, String updaterUsername) {
@@ -150,6 +168,29 @@ public class TaskService {
 
         if (!isAdmin && !isManager && !isAssignee) {
             throw new AccessDeniedException("User does not have permission to update task status");
+        }
+
+        // Thông báo cho người tạo task và người thực hiện khi trạng thái thay đổi
+        String statusMsg = "Cập nhật: [" + existingTask.getTitle() + "] đã chuyển sang [" + newStatus + "]";
+        // Thông báo cho Member (Người thực hiện)
+        if (existingTask.getAssigneeId() != null) {
+            notificationService.createNotification(
+                    existingTask.getAssigneeId(),
+                    statusMsg,
+                    NotificationType.TASK_STATUS_CHANGED, project.getId(), taskId
+            );
+        }
+
+        // Thông báo cho Manager/Owner (Khi task Done hoặc Cancelled)
+        if (newStatus == TaskStatus.DONE || newStatus == TaskStatus.CANCELLED) {
+            String managerMsg = "Task [" + existingTask.getTitle() + "] " +
+                    (newStatus == TaskStatus.DONE ? "đã HOÀN THÀNH" : "đã bị HỦY bởi " + updater.getFullName());
+
+            notificationService.createNotification(
+                    project.getOwnerId(),
+                    managerMsg,
+                    NotificationType.TASK_STATUS_CHANGED, project.getId(), taskId
+            );
         }
 
         existingTask.setStatus(newStatus);
