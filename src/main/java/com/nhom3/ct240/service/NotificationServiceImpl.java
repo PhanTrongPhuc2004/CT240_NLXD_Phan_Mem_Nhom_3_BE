@@ -2,6 +2,7 @@ package com.nhom3.ct240.service;
 
 import com.nhom3.ct240.dto.notification.NotificationDTO;
 import com.nhom3.ct240.entity.Notification;
+import com.nhom3.ct240.entity.enums.NotificationType;
 import com.nhom3.ct240.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,17 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void createNotification(String userId, String message, String link) {
+    public void createNotification(String userId, String message, NotificationType type, String projectId, String taskId) {
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setMessage(message);
-        notification.setLink(link);
+        notification.setType(type);
+        notification.setProjectId(projectId);
+        notification.setTaskId(taskId);
         notification.setRead(false);
         notification.setCreatedAt(LocalDateTime.now());
         notificationRepository.save(notification);
-        
+
         // TODO: Gửi thông báo real-time qua WebSocket nếu có
     }
 
@@ -48,9 +51,13 @@ public class NotificationServiceImpl implements NotificationService {
 
             dto.setId(n.getId());
             dto.setUserId(n.getUserId());
-            dto.setType(n.getType());
+            if (n.getType() != null) {
+                dto.setType(n.getType());
+            }
+            if (n.getRelatedTaskId() != null) {
+                dto.setRelatedTaskId(n.getRelatedTaskId());
+            }
             dto.setMessage(n.getMessage());
-            dto.setRelatedTaskId(n.getRelatedTaskId());
             dto.setRead(n.isRead());
             dto.setCreatedAt(n.getCreatedAt());
 

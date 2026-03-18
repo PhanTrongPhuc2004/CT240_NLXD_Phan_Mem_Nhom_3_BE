@@ -10,13 +10,27 @@ import java.time.LocalDateTime;
 @Data
 @Document(collection = "notifications")
 public class Notification {
+
     @Id
     private String id;
+
     private String userId;
+
+    private String title;
+
     private NotificationType type;
+
     private String message;
+
     private String link;
+
     private String relatedTaskId;
+
     private boolean read = false;
+
+    private String projectId;
+
+    private String taskId;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }
