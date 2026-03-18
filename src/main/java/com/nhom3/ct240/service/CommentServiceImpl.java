@@ -2,8 +2,13 @@ package com.nhom3.ct240.service;
 
 import com.nhom3.ct240.dto.comment.CommentDTO;
 import com.nhom3.ct240.entity.Comment;
+import com.nhom3.ct240.entity.Project;
+import com.nhom3.ct240.entity.Task;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.NotificationType;
 import com.nhom3.ct240.repository.CommentRepository;
+import com.nhom3.ct240.repository.ProjectRepository;
+import com.nhom3.ct240.repository.TaskRepository;
 import com.nhom3.ct240.repository.UserRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +23,15 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private CommentRepository commentRepository;
-
+    @Autowired
+    private ProjectRepository projectRepository;
     @Autowired
     private UserRepository userRepository; // Dùng để lấy tên người dùng gắn vào DTO
+    @Autowired
+    private NotificationService notificationService;
 
+    @Autowired
+    private TaskRepository taskRepository;
     // CN_24: THÊM BÌNH LUẬN
     @Override
     public Comment addComment(String taskId, String content, String currentUserId) {
@@ -36,7 +46,37 @@ public class CommentServiceImpl implements CommentService {
         comment.setContent(content);
         // createdAt và updatedAt đã có giá trị mặc định là LocalDateTime.now() trong Entity
 
-        return commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
+
+        Task task = taskRepository.findById(taskId).orElseThrow();
+        User creator = userRepository.findById(currentUserId).orElseThrow();
+
+        // 1. Thông báo cho người thực hiện (Assignee) nếu họ không phải là người comment
+        if (task.getAssigneeId() != null && !task.getAssigneeId().equals(currentUserId)) {
+            notificationService.createNotification(
+                    task.getAssigneeId(),
+                    creator.getFullName() + " đã bình luận trong [" + task.getTitle() + "]",
+                    NotificationType.COMMENT_ADDED, task.getProjectId(), taskId
+            );
+        }
+
+        // 2. Logic xử lý Tag @username (Thông báo Tag @bạn)
+        if (content.contains("@")) {
+            // Giả sử bạn parse được list username từ content
+            // findUserByUsername -> notificationService.createNotification(..., MENTIONED_IN_COMMENT, ...)
+        }
+
+        // 3. Thông báo cho Manager (Bình luận cần chú ý)
+        if (content.toLowerCase().contains("lỗi") || content.toLowerCase().contains("block")) {
+            Project project = projectRepository.findById(task.getProjectId()).orElseThrow();
+            notificationService.createNotification(
+                    project.getOwnerId(),
+                    "Chú ý: Task [" + task.getTitle() + "] có bình luận về lỗi/block",
+                    NotificationType.COMMENT_ADDED, project.getId(), taskId
+            );
+        }
+
+        return savedComment;
     }
 
     // CN_25: XEM DANH SÁCH BÌNH LUẬN
