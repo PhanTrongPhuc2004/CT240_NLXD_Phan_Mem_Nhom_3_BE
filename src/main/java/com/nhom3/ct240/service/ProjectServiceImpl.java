@@ -3,6 +3,7 @@ package com.nhom3.ct240.service;
 import com.nhom3.ct240.dto.project.ProjectDTO;
 import com.nhom3.ct240.entity.Project;
 import com.nhom3.ct240.entity.User;
+import com.nhom3.ct240.entity.enums.NotificationType;
 import com.nhom3.ct240.entity.enums.Role;
 import com.nhom3.ct240.repository.ProjectRepository;
 import com.nhom3.ct240.repository.UserRepository;
@@ -93,8 +94,16 @@ public class ProjectServiceImpl implements ProjectService {
         if (!isOwner && !isAdmin) {
             throw new RuntimeException("Only the project owner or admin can delete this project");
         }
-        
+
+        // TRIGGER: Thông báo cho toàn bộ Member (Trừ người xóa) trước khi xóa data
         project.getMemberIds().forEach(memberId -> {
+            if (!memberId.equals(currentUserId)) {
+                notificationService.createNotification(
+                        memberId,
+                        "Dự án [" + project.getName() + "] đã bị xóa bởi quản lý",
+                        NotificationType.PROJECT_DELETED, projectId, null
+                );
+            }
             userRepository.findById(memberId).ifPresent(user -> {
                 user.getParticipatingProjectIds().remove(projectId);
                 userRepository.save(user);
@@ -143,15 +152,18 @@ public class ProjectServiceImpl implements ProjectService {
     public Project assignManager(String projectId, String userIdToAssign, String currentUserId) {
         Project project = getProjectAndCheckOwnerPermission(projectId, currentUserId);
         User userToAssign = findUserById(userIdToAssign);
+        User currentUser = findUserById(currentUserId);
 
-        if (!project.getManagerIds().contains(userIdToAssign)) {
-            project.getManagerIds().add(userIdToAssign);
-            notificationService.createNotification(userIdToAssign, "Bạn đã được thăng chức làm quản lý dự án: " + project.getName(), null);
-        }
         if (!project.getMemberIds().contains(userIdToAssign)) {
             project.getMemberIds().add(userIdToAssign);
             userToAssign.getParticipatingProjectIds().add(projectId);
             userRepository.save(userToAssign);
+            // TRIGGER: Mời tham gia dự án mới (Member nhận)
+            notificationService.createNotification(
+                    userIdToAssign,
+                    "Bạn được mời tham gia dự án: [" + project.getName() + "] bởi " + currentUser.getFullName(),
+                    NotificationType.PROJECT_INVITE, projectId, null
+            );
         }
 
         return projectRepository.save(project);
@@ -163,7 +175,11 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectAndCheckOwnerPermission(projectId, currentUserId);
         
         project.getManagerIds().remove(userIdToRemove);
-        notificationService.createNotification(userIdToRemove, "Bạn đã bị xóa khỏi vai trò quản lý dự án: " + project.getName(), null);
+        notificationService.createNotification(userIdToRemove,
+                "Bạn đã bị xóa khỏi vai trò quản lý dự án: " + project.getName(),
+                NotificationType.PROJECT_DELETED, // Cập nhật loại thông báo phù hợp
+                projectId,
+                null);
         
         return projectRepository.save(project);
     }
@@ -178,7 +194,8 @@ public class ProjectServiceImpl implements ProjectService {
             project.getMemberIds().add(userIdToAssign);
             userToAssign.getParticipatingProjectIds().add(projectId);
             userRepository.save(userToAssign);
-            notificationService.createNotification(userIdToAssign, "Bạn đã được thêm vào dự án: " + project.getName(), null);
+            notificationService.createNotification(userIdToAssign, "Bạn đã được thêm vào dự án: " + project.getName(),NotificationType.PROJECT_INVITE,
+                    projectId, null);
         }
         return projectRepository.save(project);
     }
@@ -198,7 +215,8 @@ public class ProjectServiceImpl implements ProjectService {
         userToRemove.getParticipatingProjectIds().remove(projectId);
         userRepository.save(userToRemove);
         
-        notificationService.createNotification(userIdToRemove, "Bạn đã bị xóa khỏi dự án: " + project.getName(), null);
+        notificationService.createNotification(userIdToRemove, "Bạn đã bị xóa khỏi dự án: " + project.getName(),NotificationType.PROJECT_DELETED,
+                projectId, null);
 
         return projectRepository.save(project);
     }
@@ -220,10 +238,12 @@ public class ProjectServiceImpl implements ProjectService {
         project.getPendingMemberIds().add(currentUserId);
         projectRepository.save(project);
         
-        notificationService.createNotification(project.getOwnerId(), "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(), null);
+        notificationService.createNotification(project.getOwnerId(), "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(),NotificationType.MEMBER_REQUEST_JOIN,
+                projectId, null);
         
         for (String managerId : project.getManagerIds()) {
-            notificationService.createNotification(managerId, "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(), null);
+            notificationService.createNotification(managerId, "Có yêu cầu tham gia mới từ " + user.getFullName() + " vào dự án " + project.getName(),NotificationType.MEMBER_REQUEST_JOIN,
+                    projectId, null);
         }
     }
 
@@ -269,7 +289,8 @@ public class ProjectServiceImpl implements ProjectService {
         
         userRepository.save(userToApprove);
         
-        notificationService.createNotification(userIdToApprove, "Yêu cầu tham gia dự án " + project.getName() + " của bạn đã được chấp nhận.", null);
+        notificationService.createNotification(userIdToApprove, "Yêu cầu tham gia dự án " + project.getName() + " của bạn đã được chấp nhận.",NotificationType.PROJECT_JOIN_APPROVED,
+                projectId, null);
         
         return projectRepository.save(project);
     }
@@ -285,7 +306,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.getPendingMemberIds().remove(userIdToReject);
         
-        notificationService.createNotification(userIdToReject, "Yêu cầu tham gia dự án " + project.getName() + " của bạn đã bị từ chối.", null);
+        notificationService.createNotification(userIdToReject, "Yêu cầu tham gia dự án " + project.getName() + " của bạn đã bị từ chối.",NotificationType.PROJECT_JOIN_REJECTED,
+                projectId, null);
         
         return projectRepository.save(project);
     }
@@ -314,10 +336,12 @@ public class ProjectServiceImpl implements ProjectService {
         
         projectRepository.save(project);
         
-        notificationService.createNotification(project.getOwnerId(), "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(), null);
+        notificationService.createNotification(project.getOwnerId(), "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(),NotificationType.MEMBER_LEFT_PROJECT,
+                projectId, null);
         
         for (String managerId : project.getManagerIds()) {
-            notificationService.createNotification(managerId, "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(), null);
+            notificationService.createNotification(managerId, "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(),NotificationType.MEMBER_LEFT_PROJECT,
+                    projectId, null);
         }
     }
 
