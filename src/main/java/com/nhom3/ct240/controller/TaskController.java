@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,7 @@ public class TaskController {
 
     // CN_17: Tạo công việc mới
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<?> createTask(
             @Valid @RequestBody CreateTaskDTO createTaskDTO,
             Authentication authentication) {
@@ -46,6 +48,7 @@ public class TaskController {
 
     // CN_18: Chỉnh sửa công việc
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Task> updateTask(
             @PathVariable String id,
             @RequestBody Task taskDetails,
@@ -63,6 +66,7 @@ public class TaskController {
 
     // CN_19: Xóa công việc
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteTask(
             @PathVariable String id,
             Authentication authentication) {
@@ -129,6 +133,7 @@ public class TaskController {
 
     // CN_23: Phân công người thực hiện công việc
     @PatchMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Task> assignTask(
             @PathVariable String id,
             @RequestBody AssignTaskDTO assignTaskDTO,

@@ -177,7 +177,25 @@ public class ProjectServiceImpl implements ProjectService {
         User userToAssign = findUserById(userIdToAssign);
         User currentUser = findUserById(currentUserId);
 
+        if (!project.getManagerIds().contains(userIdToAssign)) {
+            project.getManagerIds().add(userIdToAssign);
+            notificationService.createNotification(
+                userIdToAssign, 
+                "Bạn đã được thăng chức làm quản lý dự án: " + project.getName(), 
+                NotificationType.PROJECT_INVITE, 
+                projectId, 
+                null
+            );
 
+            activityLogService.logActivity(
+                projectId,
+                currentUserId,
+                "Cập nhật vai trò",
+                userToAssign.getFullName() + " đã được thăng cấp làm Quản lý",
+                "mdi-account-star",
+                "info"
+            );
+        }
         if (!project.getMemberIds().contains(userIdToAssign)) {
             project.getMemberIds().add(userIdToAssign);
             userToAssign.getParticipatingProjectIds().add(projectId);
