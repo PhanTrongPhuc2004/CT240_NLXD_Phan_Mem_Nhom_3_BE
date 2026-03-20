@@ -219,11 +219,12 @@ public class TaskService {
         Project project = projectRepository.findById(existingTask.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
             
-        boolean isAdmin = updater.getRole() == Role.ADMIN;
-        boolean isManager = project.getOwnerId().equals(updater.getId()) || project.getManagerIds().contains(updater.getId());
+        boolean isOwner = project.getOwnerId().equals(updater.getId());
+        boolean isProjectManager = project.getManagerIds().contains(updater.getId());
+        boolean isSystemManagerInProject = updater.getRole() == Role.MANAGER && project.getMemberIds().contains(updater.getId());
         boolean isAssignee = existingTask.getAssigneeId() != null && existingTask.getAssigneeId().equals(updater.getId());
 
-        if (!isAdmin && !isManager && !isAssignee) {
+        if (!isOwner && !isProjectManager && !isSystemManagerInProject && !isAssignee) {
             throw new AccessDeniedException("User does not have permission to update task status");
         }
 
