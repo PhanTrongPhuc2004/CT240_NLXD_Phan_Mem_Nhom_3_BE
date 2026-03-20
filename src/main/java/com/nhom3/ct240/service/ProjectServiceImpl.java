@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -138,7 +139,6 @@ public class ProjectServiceImpl implements ProjectService {
             userRepository.save(owner);
         }
 
-        // Project bị xoá nên không ghi log nữa hoặc có thể ghi log ở đâu đó khác
         projectRepository.delete(project);
     }
 
@@ -162,7 +162,18 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getAllProjects(String currentUserId) {
-        return projectRepository.findAll();
+        // Lấy tất cả dự án và lọc bằng Java Stream để đảm bảo độ chính xác 100% 
+        // Tránh lỗi khi Spring Data MongoDB không parse đúng câu query mảng
+        List<Project> allProjects = projectRepository.findAll();
+        
+        return allProjects.stream()
+                .filter(p -> 
+                    "public".equalsIgnoreCase(p.getVisibility()) || 
+                    currentUserId.equals(p.getOwnerId()) || 
+                    (p.getMemberIds() != null && p.getMemberIds().contains(currentUserId)) ||
+                    (p.getManagerIds() != null && p.getManagerIds().contains(currentUserId))
+                )
+                .collect(Collectors.toList());
     }
 
     @Override
