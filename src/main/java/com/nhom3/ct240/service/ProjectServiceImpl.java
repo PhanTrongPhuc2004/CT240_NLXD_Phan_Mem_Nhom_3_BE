@@ -128,14 +128,14 @@ public class ProjectServiceImpl implements ProjectService {
                 );
             }
             userRepository.findById(memberId).ifPresent(user -> {
-                user.getParticipatingProjectIds().remove(projectId);
+                user.getParticipatingProjectIds().removeIf(id -> id.equals(projectId));
                 userRepository.save(user);
             });
         });
 
         User owner = userRepository.findById(project.getOwnerId()).orElse(null);
         if (owner != null) {
-            owner.getOwnedProjectIds().remove(projectId);
+            owner.getOwnedProjectIds().removeIf(id -> id.equals(projectId));
             userRepository.save(owner);
         }
 
@@ -162,8 +162,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getAllProjects(String currentUserId) {
-        // Lấy tất cả dự án và lọc bằng Java Stream để đảm bảo độ chính xác 100% 
-        // Tránh lỗi khi Spring Data MongoDB không parse đúng câu query mảng
         List<Project> allProjects = projectRepository.findAll();
         
         return allProjects.stream()
@@ -237,7 +235,7 @@ public class ProjectServiceImpl implements ProjectService {
         Project project = getProjectAndCheckOwnerPermission(projectId, currentUserId);
         User userToRemove = findUserById(userIdToRemove);
         
-        project.getManagerIds().remove(userIdToRemove);
+        project.getManagerIds().removeIf(id -> id.equals(userIdToRemove));
         notificationService.createNotification(userIdToRemove,
                 "Bạn đã bị xóa khỏi vai trò quản lý dự án: " + project.getName(),
                 NotificationType.PROJECT_DELETED,
@@ -291,9 +289,9 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Cannot remove the project owner.");
         }
 
-        project.getMemberIds().remove(userIdToRemove);
-        project.getManagerIds().remove(userIdToRemove);
-        userToRemove.getParticipatingProjectIds().remove(projectId);
+        project.getMemberIds().removeIf(id -> id.equals(userIdToRemove));
+        project.getManagerIds().removeIf(id -> id.equals(userIdToRemove));
+        userToRemove.getParticipatingProjectIds().removeIf(id -> id.equals(projectId));
         userRepository.save(userToRemove);
         
         notificationService.createNotification(userIdToRemove, "Bạn đã bị xóa khỏi dự án: " + project.getName(),NotificationType.PROJECT_DELETED,
@@ -353,7 +351,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         if (project.getPendingMemberIds().contains(currentUserId)) {
-            project.getPendingMemberIds().remove(currentUserId);
+            project.getPendingMemberIds().removeIf(id -> id.equals(currentUserId));
             projectRepository.save(project);
             
             User user = findUserById(currentUserId);
@@ -389,7 +387,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         User userToApprove = findUserById(userIdToApprove);
 
-        project.getPendingMemberIds().remove(userIdToApprove);
+        project.getPendingMemberIds().removeIf(id -> id.equals(userIdToApprove));
         project.getMemberIds().add(userIdToApprove);
         userToApprove.getParticipatingProjectIds().add(projectId);
         
@@ -421,7 +419,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         User userToReject = findUserById(userIdToReject);
 
-        project.getPendingMemberIds().remove(userIdToReject);
+        project.getPendingMemberIds().removeIf(id -> id.equals(userIdToReject));
         
         notificationService.createNotification(userIdToReject, "Yêu cầu tham gia dự án " + project.getName() + " của bạn đã bị từ chối.",NotificationType.PROJECT_JOIN_REJECTED,
                 projectId, null);
@@ -453,13 +451,15 @@ public class ProjectServiceImpl implements ProjectService {
             throw new RuntimeException("Project owner cannot leave the project. Please transfer ownership or delete the project.");
         }
 
-        project.getMemberIds().remove(currentUserId);
-        project.getManagerIds().remove(currentUserId);
+        // Sử dụng removeIf để đảm bảo xóa chính xác ID ra khỏi Collection
+        project.getMemberIds().removeIf(id -> id.equals(currentUserId));
+        project.getManagerIds().removeIf(id -> id.equals(currentUserId));
         
         User user = findUserById(currentUserId);
-        user.getParticipatingProjectIds().remove(projectId);
+        user.getParticipatingProjectIds().removeIf(id -> id.equals(projectId));
         userRepository.save(user);
         
+        // Đảm bảo lưu lại Project sau khi đã remove ID
         projectRepository.save(project);
         
         notificationService.createNotification(project.getOwnerId(), "Thành viên " + userLeaving.getFullName() + " đã rời khỏi dự án " + project.getName(),NotificationType.MEMBER_LEFT_PROJECT,
