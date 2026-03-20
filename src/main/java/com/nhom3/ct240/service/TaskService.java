@@ -24,8 +24,13 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    
     @Autowired
     private NotificationService notificationService; // Thêm sự kiện thông báo
+
+    @Autowired
+    private ActivityLogService activityLogService; // Thêm ActivityLogService
+
     @Autowired
     public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
@@ -74,6 +79,8 @@ public class TaskService {
         checkManagerPermission(createTaskDTO.getProjectId(), creatorUsername);
         Project project = projectRepository.findById(createTaskDTO.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
+        User creator = getUserByUsername(creatorUsername); // Lấy user hiện tại
+        
         if (createTaskDTO.getAssigneeId() != null && !createTaskDTO.getAssigneeId().isEmpty()) {
             boolean isMember = project.getMemberIds().contains(createTaskDTO.getAssigneeId());
             if (!isMember) {
@@ -92,6 +99,17 @@ public class TaskService {
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
         Task savedTask = taskRepository.save(task);
+
+        // Ghi log hoạt động
+        activityLogService.logActivity(
+            task.getProjectId(),
+            creator.getId(),
+            "Tạo công việc",
+            "Công việc '" + task.getTitle() + "' vừa được tạo",
+            "mdi-plus-box",
+            "info"
+        );
+
         // Gửi thông báo nếu có người được gán
         if (savedTask.getAssigneeId() != null) {
             notificationService.createNotification(
@@ -106,6 +124,7 @@ public class TaskService {
     public Task updateTask(String taskId, Task taskDetails, String editorUsername) {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
+        User editor = getUserByUsername(editorUsername);
 
         checkManagerPermission(existingTask.getProjectId(), editorUsername);
 
@@ -114,20 +133,45 @@ public class TaskService {
         existingTask.setDeadline(taskDetails.getDeadline());
         existingTask.setPriority(taskDetails.getPriority());
         existingTask.setUpdatedAt(LocalDateTime.now());
-        return taskRepository.save(existingTask);
+        Task savedTask = taskRepository.save(existingTask);
+
+        // Ghi log hoạt động
+        activityLogService.logActivity(
+            existingTask.getProjectId(),
+            editor.getId(),
+            "Cập nhật công việc",
+            "Thông tin công việc '" + existingTask.getTitle() + "' đã được cập nhật",
+            "mdi-pencil",
+            "warning"
+        );
+
+        return savedTask;
     }
 
     public void deleteTask(String taskId, String deleterUsername) {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
+        User deleter = getUserByUsername(deleterUsername);
+        
         checkManagerPermission(existingTask.getProjectId(), deleterUsername);
         taskRepository.deleteById(taskId);
+
+        // Ghi log hoạt động
+        activityLogService.logActivity(
+            existingTask.getProjectId(),
+            deleter.getId(),
+            "Xóa công việc",
+            "Công việc '" + existingTask.getTitle() + "' đã bị xóa",
+            "mdi-delete",
+            "error"
+        );
     }
 
     public Task assignTask(String taskId, String assigneeId, String assignerUsername) {
         Task existingTask = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
         checkManagerPermission(existingTask.getProjectId(), assignerUsername);
+        User assigner = getUserByUsername(assignerUsername);
 
         Project project = projectRepository.findById(existingTask.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
@@ -141,6 +185,19 @@ public class TaskService {
         existingTask.setAssigneeId(assigneeId);
         existingTask.setUpdatedAt(LocalDateTime.now());
         Task savedTask = taskRepository.save(existingTask);
+
+        // Tùy chọn: Bạn có thể thêm log activity ở đây
+        // Ghi log hoạt động
+        User assignee = userRepository.findById(assigneeId).orElse(null);
+        String assigneeName = assignee != null ? assignee.getFullName() : "Ai đó";
+        activityLogService.logActivity(
+            existingTask.getProjectId(),
+            assigner.getId(),
+            "Phân công",
+            "Công việc '" + existingTask.getTitle() + "' đã được giao cho " + assigneeName,
+            "mdi-account-arrow-right",
+            "primary"
+        );
 
         // TRIGGER: Thông báo cho Member (Assignee)
         notificationService.createNotification(
@@ -169,6 +226,16 @@ public class TaskService {
         if (!isAdmin && !isManager && !isAssignee) {
             throw new AccessDeniedException("User does not have permission to update task status");
         }
+
+        // Ghi log hoạt động trước khi đổi trạng thái (để log chính xác trạng thái cũ - nếu muốn, ở đây chỉ log trạng thái mới)
+        activityLogService.logActivity(
+            existingTask.getProjectId(),
+            updater.getId(),
+            "Cập nhật trạng thái",
+            "Công việc '" + existingTask.getTitle() + "' chuyển sang trạng thái " + newStatus,
+            "mdi-check-circle",
+            "success"
+        );
 
         // Thông báo cho người tạo task và người thực hiện khi trạng thái thay đổi
         String statusMsg = "Cập nhật: [" + existingTask.getTitle() + "] đã chuyển sang [" + newStatus + "]";
