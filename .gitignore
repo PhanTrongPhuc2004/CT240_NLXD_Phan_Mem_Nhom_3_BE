@@ -39,3 +39,6 @@ data/
 # Windows
 Thumbs.db
 ehthumbs.db
+
+# Bo qua thu muc chua file upload
+uploads/

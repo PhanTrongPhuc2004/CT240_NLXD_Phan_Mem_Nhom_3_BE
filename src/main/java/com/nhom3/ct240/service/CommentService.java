@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface CommentService {
 
-    Comment addComment(String taskId, String content, String currentUserId);
+    Comment addComment(String taskId, String content, List<String> attachmentUrls, String currentUserId, String parentId);
 
     List<CommentDTO> getCommentsByTask(String taskId);
 

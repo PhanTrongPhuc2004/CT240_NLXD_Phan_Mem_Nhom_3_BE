@@ -34,7 +34,7 @@ public class CommentServiceImpl implements CommentService {
     private TaskRepository taskRepository;
     // CN_24: THÊM BÌNH LUẬN
     @Override
-    public Comment addComment(String taskId, String content, String currentUserId) {
+    public Comment addComment(String taskId, String content, List<String> attachmentUrls, String currentUserId,String parentId){
         // Ràng buộc Không cho phép gửi bình luận rỗng
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Nội dung bình luận không được để trống!");
@@ -44,7 +44,10 @@ public class CommentServiceImpl implements CommentService {
         comment.setTaskId(taskId);
         comment.setUserId(currentUserId);
         comment.setContent(content);
-        // createdAt và updatedAt đã có giá trị mặc định là LocalDateTime.now() trong Entity
+
+        comment.setAttachmentUrls(attachmentUrls);
+
+        comment.setParentId(parentId);
 
         Comment savedComment = commentRepository.save(comment);
 

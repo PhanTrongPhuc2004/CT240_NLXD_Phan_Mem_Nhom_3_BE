@@ -15,6 +15,7 @@ public class Comment {
     private String taskId;
     private String userId;
     private String content;
+    private String parentId;
     private List<String> attachmentUrls;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
