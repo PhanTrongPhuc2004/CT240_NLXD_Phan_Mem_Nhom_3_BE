@@ -50,7 +50,7 @@ Frontend (Vue.js) kết nối qua **REST API** và **WebSocket** (STOMP).
 - **Test**: JUnit 5, Mockito
 - **IDE**: Eclipse / IntelliJ IDEA
 
-## Cấu trúc thư mục (Updated)
+## Cấu trúc thư mục
 
 ```text
 src/main/java/com/nhom3/ct240/
@@ -181,7 +181,7 @@ Hệ thống áp dụng 5 Design Pattern chính theo yêu cầu đồ án:
    - Nhấn Ctrl + C trong terminal
    - Hoặc trong IntelliJ: Nhấn nút đỏ (Stop).
 
-### Hướng dẫn chạy Plugin (Mới)
+### Hướng dẫn chạy Plugin
 1. Tạo thư mục `plugins` tại thư mục gốc của dự án.
 2. Build các module mở rộng thành file `.jar`.
 3. Copy file `.jar` vào thư mục `plugins`.
