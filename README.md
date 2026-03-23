@@ -1,6 +1,6 @@
 # Ứng dụng Quản lý Công việc Nhóm - Backend
 
-**Tên dự án**: CT240_NLX_D_Phan_Mem_Nhom_3  
+**Tên dự án**: CT240_NLXD_Phan_Mem_Nhom_3  
 **Môn học**: Nguyên lý Xây dựng Phần mềm (CT240)  
 **Nhóm thực hiện**: Nhóm 3  
 **Thành viên**:
@@ -13,7 +13,7 @@
  
 **Giảng viên hướng dẫn**: TS. Trương Minh Thái  
 **Học kỳ**: II, Năm học 2025-2026  
-**Ngày hoàn thành**: Tháng 01/2026
+**Ngày hoàn thành**: Tháng 03/2026
 
 ## Mô tả dự án
 
@@ -38,7 +38,7 @@ Frontend (Vue.js) kết nối qua **REST API** và **WebSocket** (STOMP).
 ## Công nghệ sử dụng
 
 - **Ngôn ngữ**: Java 17/21
-- **Framework**: Spring Boot 4.0.3
+- **Framework**: Spring Boot 3.x
     - Spring Web (REST API)
     - Spring Data MongoDB
     - Spring Security + JWT
@@ -50,69 +50,91 @@ Frontend (Vue.js) kết nối qua **REST API** và **WebSocket** (STOMP).
 - **Test**: JUnit 5, Mockito
 - **IDE**: Eclipse / IntelliJ IDEA
 
-## Cấu trúc thư mục (Backend)
+## Cấu trúc thư mục (Updated)
 
 ```text
 src/main/java/com/nhom3/ct240/
-├── config/                    # Cấu hình chung (Security, WebSocket, Jackson,...)
-│   ├── SecurityConfig.java    
-│   └── WebSocketConfig.java   # (skeleton mới)
-├── controller/                # Các REST API controller
+├── config/                    # Cấu hình chung hệ thống
+│   ├── SecurityConfig.java    # Cấu hình bảo mật
+│   └── WebSocketConfig.java   # Cấu hình WebSocket real-time
+├── controller/                # REST API Controllers (Tiếp nhận request)
 │   ├── AuthController.java    
 │   ├── UserController.java
 │   ├── ProjectController.java
 │   ├── TaskController.java
-│   ├── CommentController.java
-│   ├── NotificationController.java
-│   └── ReportController.java
-├── dto/                       # DTOs dùng chung
-│   ├── AuthResponse.java      
-│   ├── UserResponseDTO.java   
-│   ├── ProjectDTO.java        
-│   ├── TaskDTO.java           
-│   ├── CommentDTO.java        
-│   ├── NotificationDTO.java   
-│   ├── RegisterRequest.java   
-│   └── LoginRequest.java      
-├── entity/                    # Các entity MongoDB 
+│   └── ...
+├── dto/                       # Data Transfer Objects (Dữ liệu trao đổi)
+│   ├── auth/                  # DTO cho xác thực (Login, Register...)
+│   ├── task/                  # DTO cho Task (CreateTaskDTO...)
+│   └── ...
+├── entity/                    # Các Entity lưu trữ trong MongoDB
 │   ├── User.java              
 │   ├── Project.java           
 │   ├── Task.java              
-│   ├── Comment.java           
-│   ├── Notification.java      
-│   ├── TaskHistory.java       
-│   └── enums/                 # Các enum
-│       ├── Role.java
-│       ├── ProjectStatus.java
-│       ├── TaskStatus.java
-│       ├── Priority.java
-│       └── NotificationType.java
-├── repository/                # Repository interfaces
+│   └── enums/                 # Các Enum (Role, TaskStatus,...)
+├── event/                     # [OBSERVER PATTERN] Các sự kiện Domain
+│   ├── BaseEvent.java         
+│   ├── TaskCreatedEvent.java  
+│   ├── TaskAssignedEvent.java
+│   ├── TaskStatusChangedEvent.java
+│   └── ...
+├── factory/                   # [FACTORY PATTERN] Khởi tạo đối tượng phức tạp
+│   └── TaskFactory.java       # Factory chuyên biệt để tạo Task
+├── listener/                  # [OBSERVER PATTERN] Xử lý sự kiện bất đồng bộ
+│   └── TaskEventListener.java # Lắng nghe sự kiện để Gửi thông báo & Ghi log
+├── plugin/                    # [PLUGIN ARCHITECTURE] Hệ thống mở rộng
+│   ├── Plugin.java            # Interface chung cho mọi plugin
+│   ├── PluginLoader.java      # Load file .jar bên ngoài bằng Java Reflection
+│   └── HostContext.java       # Cung cấp ngữ cảnh ứng dụng cho plugin
+├── repository/                # Data Access Layer (Giao tiếp MongoDB)
 │   ├── UserRepository.java    
-│   ├── ProjectRepository.java
 │   ├── TaskRepository.java
-│   ├── CommentRepository.java
-│   └── NotificationRepository.java
-├── service/                   # Business logic (interface + impl)
-│   ├── UserService.java       
-│   ├── UserServiceImpl.java   
-│   ├── ProjectService.java
-│   ├── TaskService.java
-│   ├── CommentService.java
+│   └── ...
+├── security/                  # Authentication & Authorization
+│   ├── JwtAuthenticationFilter.java  
+│   └── ...
+├── service/                   # Business Logic Layer
+│   ├── TaskService.java       # Xử lý nghiệp vụ chính của Task
 │   ├── NotificationService.java
-│   └── ReportService.java
-├── security/                  # Bảo mật
-│   └── JwtAuthenticationFilter.java  
-├── util/                      # Các utility chung
-│   └── JwtUtil.java           
-├── exception/                 # Xử lý lỗi chung
-│   └── GlobalExceptionHandler.java
-├── plugin/                    # Nếu áp dụng plugin architecture (theo yêu cầu đồ án)
-│   ├── Plugin.java            # Interface plugin
-│   ├── PluginLoader.java      # Load plugin bằng reflection
-│   └── HostContext.java       # Context cho plugin
-└── Ct240Application.java      # Main class 
+│   ├── ActivityLogService.java
+│   └── ...
+├── strategy/                  # [STRATEGY & TEMPLATE METHOD PATTERN] Xử lý trạng thái
+│   ├── TaskStatusUpdateStrategy.java          # Interface Strategy
+│   ├── AbstractTaskStatusUpdateStrategy.java  # [TEMPLATE METHOD] Class cha định nghĩa quy trình
+│   ├── TaskStatusStrategyFactory.java         # Factory chọn chiến lược phù hợp
+│   ├── ToDoStatusUpdateStrategy.java          # Chiến lược: Chuyển sang To Do
+│   ├── InProgressStatusUpdateStrategy.java    # Chiến lược: Chuyển sang In Progress
+│   ├── DoneStatusUpdateStrategy.java          # Chiến lược: Chuyển sang Done
+│   └── CancelledStatusUpdateStrategy.java     # Chiến lược: Chuyển sang Cancelled (có lý do)
+└── Ct240Application.java      # Main Application Class
 ```
+
+## Các Design Pattern đã áp dụng
+
+Hệ thống áp dụng 5 Design Pattern chính theo yêu cầu đồ án:
+
+### 1. Observer Pattern (Mẫu Quan sát viên)
+- **Vị trí**: Package `event/` và `listener/`.
+- **Mục đích**: Tách rời logic nghiệp vụ chính (Tạo/Sửa Task) khỏi các tác vụ phụ (Gửi thông báo, Ghi log).
+- **Cách hoạt động**: Khi `TaskService` thực hiện xong hành động, nó bắn ra một `Event`. `TaskEventListener` sẽ bắt sự kiện này để xử lý tiếp mà không làm chậm luồng chính.
+
+### 2. Strategy Pattern (Mẫu Chiến lược)
+- **Vị trí**: Package `strategy/`.
+- **Mục đích**: Xử lý logic cập nhật trạng thái Task (To Do -> Done, Cancelled...) một cách linh hoạt mà không dùng `if-else` phức tạp.
+- **Cách hoạt động**: `TaskStatusStrategyFactory` sẽ chọn một `Strategy` tương ứng với trạng thái đích để thực thi.
+
+### 3. Template Method Pattern (Mẫu Phương thức khuôn mẫu)
+- **Vị trí**: Class `strategy/AbstractTaskStatusUpdateStrategy.java`.
+- **Mục đích**: Định nghĩa khung sườn (quy trình chuẩn) cho việc cập nhật trạng thái: `Validate` -> `Change Status` -> `Update Timestamp` -> `Post Process`. Các lớp con chỉ cài đặt chi tiết từng bước.
+
+### 4. Factory Pattern (Mẫu Nhà máy)
+- **Vị trí**: Class `factory/TaskFactory.java`.
+- **Mục đích**: Đóng gói logic khởi tạo đối tượng `Task`, đảm bảo các thuộc tính mặc định luôn được thiết lập đúng.
+
+### 5. Plugin Architecture (Kiến trúc Plugin)
+- **Vị trí**: Package `plugin/`.
+- **Mục đích**: Cho phép mở rộng tính năng của hệ thống mà không cần sửa code nguồn (Open/Closed Principle).
+- **Cách hoạt động**: `PluginLoader` sử dụng **Java Reflection** để quét và tải các file `.jar` từ thư mục bên ngoài (dynamic loading).
 
 ## Yêu cầu cài đặt & Chạy local
 
@@ -124,25 +146,29 @@ src/main/java/com/nhom3/ct240/
 
 ### Các bước chạy
 1. **Clone repo** (nếu chưa có):
+   ```bash
    git clone https://github.com/PhanTrongPhuc2004/CT240_NLXD_Phan_Mem_Nhom_3_BE
+   ```
 
 2. **Cài đặt dependencies**:
+   ```bash
    mvn clean install
+   ```
 
 3. **Khởi động MongoDB**:
    Local cài đặt: Mở terminal/command prompt, chạy:
-   ```text   
+   ```bash   
    mongod
    ```
+
 4. **Chạy ứng dụng**:
    Dùng Maven:
-   ```text
+   ```bash
    mvn spring-boot:run
    ```
    Hoặc trong IntelliJ:
-   ```text
-   Run Ct240Application
-   ```
+   - Mở class `Ct240Application.java`
+   - Nhấn nút Play (Run)
 
 5. **Kiểm tra ứng dụng đã chạy**
    Test API bằng Postman:
@@ -150,10 +176,17 @@ src/main/java/com/nhom3/ct240/
    POST http://localhost:8080/api/auth/register
    POST http://localhost:8080/api/auth/login
    ```
-6. **Dừng ứng dụng:**: Nhấn Ctrl + C trong terminal, hgit add README.mdoặc trong IntelliJ: Nhấn nút đỏ (Terminate).
 
-Chúc bạn chạy thành công! Nếu gặp lỗi, kiểm tra console log và báo lại nhóm nhé.
+6. **Dừng ứng dụng**: 
+   - Nhấn Ctrl + C trong terminal
+   - Hoặc trong IntelliJ: Nhấn nút đỏ (Stop).
 
-© 2026 Nhóm 3 - Ứng dụng Quản lý Công việc Nhóm
+### Hướng dẫn chạy Plugin (Mới)
+1. Tạo thư mục `plugins` tại thư mục gốc của dự án.
+2. Build các module mở rộng thành file `.jar`.
+3. Copy file `.jar` vào thư mục `plugins`.
+4. Khởi động lại Server, hệ thống sẽ tự động nhận diện và kích hoạt plugin.
+
+---
+© 2026 Nhóm 3 - Ứng dụng Quản lý Công việc Nhóm  
 Đại học Cần Thơ - Trường Công nghệ Thông tin và Truyền thông
-  
